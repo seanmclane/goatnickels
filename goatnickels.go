@@ -2,7 +2,11 @@ package main
 
 import(
   "fmt"
+  "net/http"
   "github.com/seanmclane/goatnickels/block"
+  "github.com/seanmclane/goatnickels/handler"
+  "github.com/gorilla/mux"
+  "log"
 )
 
 func main() {
@@ -21,4 +25,14 @@ func main() {
     blockchain = append(blockchain, next_block)
 
   }
+
+  //define server and routes for blockchain node
+  //will remove the block chaining loop above
+  r := mux.NewRouter().StrictSlash(true)
+  s := r.PathPrefix("/api/v1").Subrouter()
+
+  s.HandleFunc("/", handler.Index)
+  s.HandleFunc("/txion/{test}", handler.Txion)
+
+  log.Fatal(http.ListenAndServe(":3000", r))
 }
