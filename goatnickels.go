@@ -1,31 +1,28 @@
 package main
 
 import(
-  "fmt"
   "net/http"
+  "time"
   "github.com/seanmclane/goatnickels/block"
   "github.com/seanmclane/goatnickels/handler"
   "github.com/gorilla/mux"
   "log"
 )
 
+func mine() {
+  for {
+    time.Sleep(5 * time.Second)
+    block.GoatChain.NextBlock()
+  }
+}
+
 func main() {
-  b := block.CreateGenesisBlock()
+  block.InitializeState()
+  block.GoatChain.CreateGenesisBlock()
 
   block.AsciiGoat()
-  block.DescribeBlock(b)
+  block.DescribeBlock(block.GoatChain[0])
   
-  //initialize a blockchain with the genesis block
-  blockchain := []block.Block{b}
-
-  for i := 1; i < 5; i++ {
-    //add blocks to the chain at the right index
-    fmt.Println("Iteration",i)
-    next_block := block.NextBlock(blockchain[i-1])
-    blockchain = append(blockchain, next_block)
-
-  }
-
   //define server and routes for blockchain node
   //will remove the block chaining loop above
   r := mux.NewRouter().StrictSlash(true)
@@ -34,5 +31,6 @@ func main() {
   s.HandleFunc("/", handler.Index)
   s.HandleFunc("/txion", handler.AddTxion)
 
+  go mine()
   log.Fatal(http.ListenAndServe(":3000", r))
 }

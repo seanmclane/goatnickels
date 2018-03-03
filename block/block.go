@@ -32,14 +32,15 @@ type Block struct {
 }
 
 type Data struct {
-  State []Account
+  State map[string]Account
   Transactions []Transaction
 }
 
 //change this to have an account as a key and balance in the object
 // "HASH": {"balance": 834729564}
+var Accounts map[string]Account
+
 type Account struct {
-  Account string
   Balance int
 }
 
@@ -61,12 +62,12 @@ func (b *Block) HashBlock() {
   b.Hash = sha3.Sum512([]byte(block_string))
 }
 
-func CreateGenesisBlock() (b Block) {
+func (bc *Blockchain) CreateGenesisBlock() {
   //set arbitrary data
   data := []byte("0")
 
   //genesis block for now
-  b = Block {
+  b := Block {
     Index: 1,
     Timestamp: 0, //convert this to the birthdate of GoatNickels
     Data: data,
@@ -75,32 +76,33 @@ func CreateGenesisBlock() (b Block) {
 
   b.HashBlock()
 
-  return b
+  (*bc) = append((*bc), b)
+}
+
+func InitializeState() {
+  //temporary
+  //manually adding accounts and transactions for now
+  Accounts = make(map[string]Account)
+
+  Accounts["sean"] = Account{
+    Balance: 50884325,
+  }
+  Accounts["kate"] = Account{
+    Balance: 94043214,
+  }
 }
 
 func CreateBlockData() (byte_data []byte){
-  //manually adding accounts and transactions for now
-  sean := Account{
-    Account: "sean",
-    Balance: 50884325,
-  }
-  kate := Account{
-    Account: "kate",
-    Balance: 94043214,
-  }
-  sean_to_kate := Transaction{
-    From: "sean",
-    To: "kate",
-    Amount: 140543,
-  }
 
-  state := []Account{sean, kate}
-  transactions := []Transaction{sean_to_kate}
+  state := Accounts
+  transactions := CandidateSet
   
   data := Data{
     State: state,
     Transactions: transactions,
   }
+
+  data.ApplyTransactionsToState()
   
   d, err := json.Marshal(data)
   if err != nil {
@@ -114,19 +116,21 @@ func CreateBlockData() (byte_data []byte){
   return byte_data
 }
 
-func NextBlock(last_block Block) (next_block Block) {
-  next_block = Block {
-    Index: last_block.Index+1,
+func (bc *Blockchain) NextBlock() {
+
+  next_block := Block {
+    Index: (*bc)[len((*bc))-1].Index+1,
     Timestamp: int(time.Now().UTC().Unix()),
     Data: CreateBlockData(),
-    LastHash: last_block.Hash,
+    LastHash: (*bc)[len((*bc))-1].Hash,
   }
   
   next_block.HashBlock()
 
   DescribeBlock(next_block)
 
-  return next_block
+  (*bc) = append((*bc), next_block)
+
 }
 
 func DescribeBlock(b Block) {
@@ -135,4 +139,17 @@ func DescribeBlock(b Block) {
   fmt.Println("Block Hash:", hex.EncodeToString(b.Hash[:]))
   fmt.Println("Block Time:", time.Unix(int64(b.Timestamp),0))
   fmt.Println("\n\n")
+}
+
+func (d *Data) ApplyTransactionsToState() {
+  //add and subtract from accounts
+  for _, txion := range CandidateSet {
+    fnb := d.State[txion.From].Balance - txion.Amount
+    d.State[txion.From] = Account{Balance: fnb} 
+    tnb := d.State[txion.To].Balance + txion.Amount
+    d.State[txion.To] = Account{Balance: tnb} 
+  }
+  //reset candidate transactions to apply
+  CandidateSet = nil
+
 }

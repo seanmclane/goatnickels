@@ -10,26 +10,13 @@ import (
 
 func Index(w http.ResponseWriter, r *http.Request) {
 
-  bytes, err := json.Marshal(block.CreateGenesisBlock())
-  if err != nil {
-    http.Error(w, err.Error(), http.StatusInternalServerError)
-  }
-
-  w.Header().Set("Content-Type", "application/json; charset=UTF-8")
-  w.WriteHeader(http.StatusOK)
-  w.Write(bytes)
-
-}
-
-func NewBlock(w http.ResponseWriter, r *http.Request) {
-
   bytes, err := json.Marshal(block.GoatChain)
   if err != nil {
     http.Error(w, err.Error(), http.StatusInternalServerError)
   }
 
   w.Header().Set("Content-Type", "application/json; charset=UTF-8")
-  w.WriteHeader(http.StatusCreated)
+  w.WriteHeader(http.StatusOK)
   w.Write(bytes)
 
 }
