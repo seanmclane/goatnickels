@@ -32,7 +32,7 @@ func main() {
   s := r.PathPrefix("/api/v1").Subrouter()
 
   s.HandleFunc("/", handler.Index)
-  s.HandleFunc("/txion/{test}", handler.Txion)
+  s.HandleFunc("/txion", handler.AddTxion)
 
   log.Fatal(http.ListenAndServe(":3000", r))
 }

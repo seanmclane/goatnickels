@@ -9,8 +9,19 @@ import(
   "golang.org/x/crypto/sha3"
   "encoding/hex"
 )
+
+//initializing blockchain objects here for now
+//create candidate set of transactions
+var CandidateSet []Transaction
+
+
+
 //make a type blockchain and make functions methods on that
 //specify json lowercase values with `json:"test"`
+
+type Blockchain []Block
+
+var GoatChain Blockchain
 
 type Block struct {
   Index int
