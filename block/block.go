@@ -2,13 +2,34 @@ package block
 
 import(
   "fmt"
-//  "os"
+  "os"
   "time"
   "encoding/json"
   "strconv"
   "golang.org/x/crypto/sha3"
   "encoding/hex"
 )
+
+//define config structure
+type Config struct {
+  Directory string
+}
+
+//load config
+func LoadConfig() {
+  c, err := os.Open("config.json")
+  if err != nil {
+    panic(err)
+  }
+
+  decoder := json.NewDecoder(c)
+  config := Config{}
+  err = decoder.Decode(&config)
+  if err != nil {
+    fmt.Println("error:", err)
+  }
+  fmt.Println(config.Directory)
+}
 
 //initializing blockchain objects here for now
 //create candidate set of transactions
