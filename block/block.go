@@ -2,6 +2,7 @@ package block
 
 import(
   "fmt"
+  "io/ioutil"
   "os"
   "time"
   "encoding/json"
@@ -11,31 +12,32 @@ import(
 )
 
 //define config structure
+//does this belong here?
 type Config struct {
-  Directory string
+  Directory string `json:"directory"`
+  LastBlock int `json:"last_block"`
 }
 
 //load config
-func LoadConfig() {
+func LoadConfig() (config Config) {
   c, err := os.Open("config.json")
   if err != nil {
     panic(err)
   }
 
+  //fix this to json unmarshal
   decoder := json.NewDecoder(c)
-  config := Config{}
   err = decoder.Decode(&config)
   if err != nil {
     fmt.Println("error:", err)
   }
-  fmt.Println(config.Directory)
+
+  return config
 }
 
 //initializing blockchain objects here for now
 //create candidate set of transactions
 var CandidateSet []Transaction
-
-
 
 //make a type blockchain and make functions methods on that
 //specify json lowercase values with `json:"test"`
@@ -57,8 +59,7 @@ type Data struct {
   Transactions []Transaction
 }
 
-//change this to have an account as a key and balance in the object
-// "HASH": {"balance": 834729564}
+//initialize state
 var Accounts map[string]Account
 
 type Account struct {
@@ -89,8 +90,8 @@ func (bc *Blockchain) CreateGenesisBlock() {
 
   //genesis block for now
   b := Block {
-    Index: 1,
-    Timestamp: 0, //convert this to the birthdate of GoatNickels
+    Index: 0,
+    Timestamp: 0, //TODO: convert this to the birthdate of GoatNickels
     Data: data,
     LastHash: sha3.Sum512(data),
   }
@@ -98,9 +99,12 @@ func (bc *Blockchain) CreateGenesisBlock() {
   b.HashBlock()
 
   (*bc) = append((*bc), b)
+
+  b.WriteBlockToLocalStorage()
+
 }
 
-func InitializeState() {
+func (bc *Blockchain) InitializeState() {
   //temporary
   //manually adding accounts and transactions for now
   Accounts = make(map[string]Account)
@@ -111,6 +115,35 @@ func InitializeState() {
   Accounts["kate"] = Account{
     Balance: 94043214,
   }
+
+  //check last block
+  //if no blockchain, start a new one
+  //TODO: if no blockchain, get it from the network instead
+  config := LoadConfig()
+  if config.LastBlock < 0 {
+    GoatChain.CreateGenesisBlock()
+    config.LastBlock = 0
+  }
+
+  b, err := ioutil.ReadFile(string(config.Directory)+strconv.Itoa(config.LastBlock)+".json")
+  if err != nil {
+    panic(err)
+  }
+
+  //make bytestring to Block
+  last_block := Block{}
+  err = json.Unmarshal(b, &last_block)
+  if err != nil {
+    fmt.Println("error:", err)
+  }
+
+  //PROBLEM: can't just append, needs to be in the right position in array for NextBlock to work...
+  for i := 0; i < last_block.Index; i++ {
+    (*bc) = append((*bc), Block{})
+  }
+
+  (*bc) = append((*bc), last_block)
+
 }
 
 func CreateBlockData() (byte_data []byte){
@@ -129,7 +162,7 @@ func CreateBlockData() (byte_data []byte){
   if err != nil {
     fmt.Println("error:", err)
   }
-//  os.Stdout.Write(d)
+
   fmt.Println("\n")
 
   byte_data = []byte(d)
@@ -139,11 +172,13 @@ func CreateBlockData() (byte_data []byte){
 
 func (bc *Blockchain) NextBlock() {
 
+  config := LoadConfig()
+
   next_block := Block {
-    Index: (*bc)[len((*bc))-1].Index+1,
+    Index: (*bc)[config.LastBlock].Index+1,
     Timestamp: int(time.Now().UTC().Unix()),
     Data: CreateBlockData(),
-    LastHash: (*bc)[len((*bc))-1].Hash,
+    LastHash: (*bc)[config.LastBlock].Hash,
   }
   
   next_block.HashBlock()
@@ -151,6 +186,8 @@ func (bc *Blockchain) NextBlock() {
   DescribeBlock(next_block)
 
   (*bc) = append((*bc), next_block)
+
+  next_block.WriteBlockToLocalStorage()
 
 }
 
@@ -174,3 +211,37 @@ func (d *Data) ApplyTransactionsToState() {
   CandidateSet = nil
 
 }
+
+func (b *Block) WriteBlockToLocalStorage() {
+  config := LoadConfig()
+
+  //convert block to json
+  //TODO: convert hashes to hex encoding
+  //TODO: convert data to plain json
+  out, err := json.Marshal(b)
+  if err != nil {
+    fmt.Println("error:", err)
+  }
+
+  //write json to file at config directory
+  //TODO: check if file exists and don't overwrite
+  err = ioutil.WriteFile(string(config.Directory)+strconv.Itoa(b.Index)+".json", out, 0644)
+  if err != nil {
+      panic(err)
+  }
+
+  //make sure config has record of last block mined
+  //TODO: refactor this when setting last block mined from checking network
+  config.LastBlock = b.Index
+  cout, err := json.Marshal(config)
+  if err != nil {
+    fmt.Println("error:", err)
+  }
+  
+  err = ioutil.WriteFile("config.json", cout, 0644)
+  if err != nil {
+      panic(err)
+  }
+  fmt.Println("Block written successfully!")
+}
+

@@ -17,9 +17,7 @@ func mine() {
 }
 
 func main() {
-  block.LoadConfig()
-  
-  block.InitializeState()
+  block.GoatChain.InitializeState()
   block.GoatChain.CreateGenesisBlock()
 
   block.AsciiGoat()
