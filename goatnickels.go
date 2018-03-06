@@ -12,16 +12,14 @@ import(
 func mine() {
   for {
     time.Sleep(5 * time.Second)
-    block.GoatChain.NextBlock()
+    block.NextBlock()
   }
 }
 
 func main() {
-  block.GoatChain.InitializeState()
-  block.GoatChain.CreateGenesisBlock()
-
+  block.InitializeState()
   block.AsciiGoat()
-  block.DescribeBlock(block.GoatChain[0])
+  block.DescribeBlock(block.LastGoatBlock)
   
   //define server and routes for blockchain node
   //will remove the block chaining loop above

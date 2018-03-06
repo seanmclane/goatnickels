@@ -36,20 +36,25 @@ func LoadConfig() (config Config) {
 }
 
 //initializing blockchain objects here for now
+//need to have last validated block (index at minimum)
+var LastGoatBlock Block
+
+//need to have last state
+var Accounts map[string]Account
+
 //create candidate set of transactions
 var CandidateSet []Transaction
 
-//make a type blockchain and make functions methods on that
 //specify json lowercase values with `json:"test"`
 
-type Blockchain []Block
-
-var GoatChain Blockchain
+//removing blockchain since it's not needed to store whole chain in memory
+// type Blockchain []Block
+// var GoatChain Blockchain
 
 type Block struct {
   Index int
   Timestamp int
-  Data []byte
+  Data Data
   LastHash [64]byte
   Hash [64]byte
 }
@@ -58,9 +63,6 @@ type Data struct {
   State map[string]Account
   Transactions []Transaction
 }
-
-//initialize state
-var Accounts map[string]Account
 
 type Account struct {
   Balance int
@@ -80,33 +82,15 @@ func AsciiGoat() {
 
 func (b *Block) HashBlock() {
   //create a hash of all values in the block
-  block_string := strconv.Itoa(b.Index)+strconv.Itoa(b.Timestamp)+string(b.Data)+hex.EncodeToString(b.LastHash[:])
+  //TODO: handle error
+  hash_data, _ := json.Marshal(b.Data)
+  block_string := strconv.Itoa(b.Index)+strconv.Itoa(b.Timestamp)+string(hash_data)+hex.EncodeToString(b.LastHash[:])
   b.Hash = sha3.Sum512([]byte(block_string))
 }
 
-func (bc *Blockchain) CreateGenesisBlock() {
-  //set arbitrary data
-  data := []byte("0")
-
-  //genesis block for now
-  b := Block {
-    Index: 0,
-    Timestamp: 0, //TODO: convert this to the birthdate of GoatNickels
-    Data: data,
-    LastHash: sha3.Sum512(data),
-  }
-
-  b.HashBlock()
-
-  (*bc) = append((*bc), b)
-
-  b.WriteBlockToLocalStorage()
-
-}
-
-func (bc *Blockchain) InitializeState() {
+func CreateGenesisBlock() {
   //temporary
-  //manually adding accounts and transactions for now
+  //manually adding accounts for now
   Accounts = make(map[string]Account)
 
   Accounts["sean"] = Account{
@@ -116,13 +100,34 @@ func (bc *Blockchain) InitializeState() {
     Balance: 94043214,
   }
 
+  //set arbitrary data
+  data := Data{
+    State: Accounts,
+    Transactions: nil,
+  }
+
+  //genesis block for now
+  b := Block {
+    Index: 1,
+    Timestamp: 0, //TODO: convert this to the birthdate of GoatNickels
+    Data: data,
+    LastHash: sha3.Sum512([]byte("Goatnickels baby!")),
+  }
+
+  b.HashBlock()
+
+  b.WriteBlockToLocalStorage()
+
+}
+
+func InitializeState() {
   //check last block
   //if no blockchain, start a new one
   //TODO: if no blockchain, get it from the network instead
   config := LoadConfig()
-  if config.LastBlock < 0 {
-    GoatChain.CreateGenesisBlock()
-    config.LastBlock = 0
+  if config.LastBlock < 1 {
+    CreateGenesisBlock()
+    config.LastBlock = 1
   }
 
   b, err := ioutil.ReadFile(string(config.Directory)+strconv.Itoa(config.LastBlock)+".json")
@@ -131,68 +136,47 @@ func (bc *Blockchain) InitializeState() {
   }
 
   //make bytestring to Block
-  last_block := Block{}
-  err = json.Unmarshal(b, &last_block)
+  err = json.Unmarshal(b, &LastGoatBlock)
   if err != nil {
     fmt.Println("error:", err)
   }
 
-  //PROBLEM: can't just append, needs to be in the right position in array for NextBlock to work...
-  for i := 0; i < last_block.Index; i++ {
-    (*bc) = append((*bc), Block{})
-  }
-
-  (*bc) = append((*bc), last_block)
-
 }
 
-func CreateBlockData() (byte_data []byte){
-
-  state := Accounts
-  transactions := CandidateSet
+func CreateBlockData() (data Data){
   
-  data := Data{
-    State: state,
-    Transactions: transactions,
+  data = Data{
+    State: LastGoatBlock.Data.State,
+    Transactions: CandidateSet,
   }
 
   data.ApplyTransactionsToState()
   
-  d, err := json.Marshal(data)
-  if err != nil {
-    fmt.Println("error:", err)
-  }
-
-  fmt.Println("\n")
-
-  byte_data = []byte(d)
-
-  return byte_data
+  return data
 }
 
-func (bc *Blockchain) NextBlock() {
-
-  config := LoadConfig()
+func NextBlock() {
 
   next_block := Block {
-    Index: (*bc)[config.LastBlock].Index+1,
+    Index: LastGoatBlock.Index+1,
     Timestamp: int(time.Now().UTC().Unix()),
     Data: CreateBlockData(),
-    LastHash: (*bc)[config.LastBlock].Hash,
+    LastHash: LastGoatBlock.Hash,
   }
   
   next_block.HashBlock()
 
   DescribeBlock(next_block)
 
-  (*bc) = append((*bc), next_block)
+  LastGoatBlock = next_block
 
   next_block.WriteBlockToLocalStorage()
 
 }
 
 func DescribeBlock(b Block) {
-  fmt.Println("Block Data:", string(b.Data[:]))
+  fmt.Println("Block State:", b.Data.State)
+  fmt.Println("Block Transactions:", b.Data.Transactions)
   fmt.Println("Last Hash:", hex.EncodeToString(b.LastHash[:]))
   fmt.Println("Block Hash:", hex.EncodeToString(b.Hash[:]))
   fmt.Println("Block Time:", time.Unix(int64(b.Timestamp),0))
@@ -231,6 +215,7 @@ func (b *Block) WriteBlockToLocalStorage() {
   }
 
   //make sure config has record of last block mined
+  //should this be from checking the file names locally for now?
   //TODO: refactor this when setting last block mined from checking network
   config.LastBlock = b.Index
   cout, err := json.Marshal(config)
@@ -242,6 +227,8 @@ func (b *Block) WriteBlockToLocalStorage() {
   if err != nil {
       panic(err)
   }
+
   fmt.Println("Block written successfully!")
+
 }
 

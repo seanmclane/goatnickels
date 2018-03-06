@@ -10,7 +10,7 @@ import (
 
 func Index(w http.ResponseWriter, r *http.Request) {
 
-  bytes, err := json.Marshal(block.GoatChain)
+  bytes, err := json.Marshal(block.LastGoatBlock)
   if err != nil {
     http.Error(w, err.Error(), http.StatusInternalServerError)
   }
