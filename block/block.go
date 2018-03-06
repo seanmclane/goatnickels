@@ -52,31 +52,38 @@ var CandidateSet []Transaction
 // var GoatChain Blockchain
 
 type Block struct {
-  Index int
-  Timestamp int
-  Data Data
-  LastHash [64]byte
-  Hash [64]byte
+  Index int `json:"index"`
+  Timestamp int `json:"timestamp"`
+  Data Data `json:"data"`
+  LastHash [64]byte `json:"last_hash"`
+  Hash [64]byte `json:"hash"`
+}
+
+type StoredBlock struct {
+  Index int `json:"index"`
+  Timestamp int `json:"timestamp"`
+  Data Data `json:"data"`
+  LastHash string `json:"last_hash"`
+  Hash string `json:"hash"`
 }
 
 type Data struct {
-  State map[string]Account
-  Transactions []Transaction
+  State map[string]Account `json:"state"`
+  Transactions []Transaction `json:"transactions"`
 }
 
 type Account struct {
-  Balance int
+  Balance int `json:"balance"`
 }
 
 type Transaction struct {
-  From string
-  To string
-  Amount int
+  From string `json:"from"`
+  To string `json:"to"`
+  Amount int `json:"amount"`
 }
 
 func AsciiGoat() {
   a := "\x20 \x20 \x20 \x20 \x20 \x20 \x20 \x20 \x20 \x20 \x20 \x20 \x20 \x2c \x2d \x2d \x2e \x5f \x2c \x2d \x2d \x2e \x0a \x20 \x20 \x20 \x20 \x20 \x20 \x20 \x20 \x20 \x20 \x20 \x2c \x27 \x20 \x20 \x2c \x27 \x20 \x20 \x20 \x2c \x2d \x60 \x2e \x0a \x28 \x60 \x2d \x2e \x5f \x5f \x20 \x20 \x20 \x20 \x2f \x20 \x20 \x2c \x27 \x20 \x20 \x20 \x2f \x0a \x20 \x60 \x2e \x20 \x20 \x20 \x60 \x2d \x2d \x27 \x20 \x20 \x20 \x20 \x20 \x20 \x20 \x20 \x5c \x5f \x5f \x2c \x2d \x2d \x27 \x2d \x2e \x0a \x20 \x20 \x20 \x60 \x2d \x2d \x2f \x20 \x20 \x20 \x20 \x20 \x20 \x20 \x2c \x2d \x2e \x20 \x20 \x5f \x5f \x5f \x5f \x5f \x5f \x2f \x0a \x20 \x20 \x20 \x20 \x20 \x28 \x6f \x2d \x2e \x20 \x20 \x20 \x20 \x20 \x2c \x6f \x2d \x20 \x2f \x0a \x20 \x20 \x20 \x20 \x20 \x20 \x60 \x2e \x20 \x3b \x20 \x20 \x20 \x20 \x20 \x20 \x20 \x20 \x5c \x0a \x20 \x20 \x20 \x20 \x20 \x20 \x20 \x7c \x3a \x20 \x20 \x20 \x20 \x20 \x20 \x20 \x20 \x20 \x20 \x5c \x0a \x20 \x20 \x20 \x20 \x20 \x20 \x2c \x27 \x60 \x20 \x20 \x20 \x20 \x20 \x20 \x20 \x2c \x20 \x20 \x20 \x5c \x0a \x20 \x20 \x20 \x20 \x20 \x28 \x6f \x20 \x6f \x20 \x2c \x20 \x20 \x2d \x2d \x27 \x20 \x20 \x20 \x20 \x20 \x3a \x0a \x20 \x20 \x20 \x20 \x20 \x20 \x5c \x2d \x2d \x27 \x2c \x27 \x2e \x20 \x20 \x20 \x20 \x20 \x20 \x20 \x20 \x3b \x0a \x20 \x20 \x20 \x20 \x20 \x20 \x20 \x60 \x3b \x3b \x20 \x20 \x3a \x20 \x20 \x20 \x20 \x20 \x20 \x20 \x2f \x0a \x20 \x20 \x20 \x20 \x20 \x20 \x20 \x20 \x3b \x27 \x20 \x20 \x3b \x20 \x20 \x2c \x27 \x20 \x2c \x27 \x0a \x20 \x20 \x20 \x20 \x20 \x20 \x20 \x20 \x2c \x27 \x2c \x27 \x20 \x20 \x3a \x20 \x20 \x27 \x0a \x20 \x20 \x20 \x20 \x20 \x20 \x20 \x20 \x5c \x20 \x5c \x20 \x20 \x20 \x3a \x0a \x20 \x20 \x20 \x20 \x20 \x20 \x20 \x20 \x20 \x60"
-  fmt.Printf("Goatnickels baby!\n")
   fmt.Println(a, "\n")
 }
 
@@ -130,7 +137,7 @@ func InitializeState() {
     config.LastBlock = 1
   }
 
-  b, err := ioutil.ReadFile(string(config.Directory)+strconv.Itoa(config.LastBlock)+".json")
+  b, err := ioutil.ReadFile(string(config.Directory)+strconv.Itoa(config.LastBlock))
   if err != nil {
     panic(err)
   }
@@ -199,9 +206,7 @@ func (d *Data) ApplyTransactionsToState() {
 func (b *Block) WriteBlockToLocalStorage() {
   config := LoadConfig()
 
-  //convert block to json
-  //TODO: convert hashes to hex encoding
-  //TODO: convert data to plain json
+  //convert data to plain json
   out, err := json.Marshal(b)
   if err != nil {
     fmt.Println("error:", err)
@@ -209,7 +214,7 @@ func (b *Block) WriteBlockToLocalStorage() {
 
   //write json to file at config directory
   //TODO: check if file exists and don't overwrite
-  err = ioutil.WriteFile(string(config.Directory)+strconv.Itoa(b.Index)+".json", out, 0644)
+  err = ioutil.WriteFile(string(config.Directory)+strconv.Itoa(b.Index), out, 0644)
   if err != nil {
       panic(err)
   }
