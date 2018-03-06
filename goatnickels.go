@@ -28,6 +28,7 @@ func main() {
 
   s.HandleFunc("/", handler.Index)
   s.HandleFunc("/txion", handler.AddTxion)
+  s.HandleFunc("/acct", handler.AddAccount)
 
   go mine()
   log.Fatal(http.ListenAndServe(":3000", r))
