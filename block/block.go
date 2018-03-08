@@ -8,6 +8,10 @@ import(
   "encoding/json"
   "strconv"
   "golang.org/x/crypto/sha3"
+  "crypto/elliptic"
+  "crypto/ecdsa"
+  "crypto/rand"
+  "math/big"
   "encoding/hex"
 )
 
@@ -80,6 +84,9 @@ type Transaction struct {
   From string `json:"from"`
   To string `json:"to"`
   Amount int `json:"amount"`
+  Nonce int `json:"nonce"`
+  R string `json:"r"`
+  S string `json:"s"`
 }
 
 func AsciiGoat() {
@@ -182,6 +189,7 @@ func NextBlock() {
 }
 
 func DescribeBlock(b Block) {
+  fmt.Println("Block ID:", b.Index)
   fmt.Println("Block State:", b.Data.State)
   fmt.Println("Block Transactions:", b.Data.Transactions)
   fmt.Println("Last Hash:", hex.EncodeToString(b.LastHash[:]))
@@ -193,6 +201,10 @@ func DescribeBlock(b Block) {
 func (d *Data) ApplyTransactionsToState() {
   //add and subtract from accounts
   for _, txion := range CandidateSet {
+    //TODO: check if transaction results in negative balance
+    //TODO: check if nonce is being reused
+
+
     fnb := d.State[txion.From].Balance - txion.Amount
     d.State[txion.From] = Account{Balance: fnb} 
     tnb := d.State[txion.To].Balance + txion.Amount
@@ -237,3 +249,70 @@ func (b *Block) WriteBlockToLocalStorage() {
 
 }
 
+type AccountResponse struct {
+  PrivateKey string `json:"private_key"`
+  PublicKey string `json:"public_key"`
+}
+
+func CreateNewAccount() {
+  //create the keypair
+  priv, err := ecdsa.GenerateKey(elliptic.P384(), rand.Reader)
+  if err != nil {
+    fmt.Println("error:", err)
+  }
+
+  //create the address from the public key variables
+  pub := priv.PublicKey
+  pubkey := elliptic.Marshal(elliptic.P384(), pub.X, pub.Y)
+
+  response := AccountResponse{
+    PrivateKey: hex.EncodeToString(priv.D.Bytes()),
+    PublicKey: "goat_"+hex.EncodeToString(pubkey),
+  }
+
+  bytes, err := json.Marshal(response)
+  if err != nil {
+    fmt.Println("error:", err)
+  }
+
+  fmt.Println(string(bytes))
+}
+
+//TODO: make this real and not a test of some hardcoded values
+func SignTransaction(t *Transaction) (r, s string) {
+  hash := sha3.Sum512([]byte("Goatnickels baby!"))
+  private_key := "8b63849798d4633fe16553d428fdd50a1214296f0e02e5ebd0a7c78040a84775153a4dcacfc9dc7f4aeab9cc981fbb78"
+  //recreate ecdsa.PrivateKey from priv
+  byte_key, _ := hex.DecodeString(private_key)
+  bigint_key := new(big.Int).SetBytes(byte_key)
+  priv := new(ecdsa.PrivateKey)
+  priv.PublicKey.Curve = elliptic.P384()
+  priv.PublicKey.X, priv.PublicKey.Y = priv.PublicKey.Curve.ScalarBaseMult(byte_key)
+
+  //TODO: handle error
+  r_int, s_int, _ := ecdsa.Sign(rand.Reader, priv, hash)
+  r := hex.EncodeToString(r_int)
+  s := hex.EncodeToString(s_int.Bytes())
+  return r, s
+}
+
+func HashTransaction(t *Transaction) (h string) {
+  h := hex.EncodeToString(sha3.Sum512([]byte("Goatnickels baby!")))
+  //TODO: hash the actual transaction
+}
+
+func (t *Transaction) VerifySignature() {
+  //check if t.Signature ok with public key?
+  //what is being signed exactly? hash of transaction nonce, to, from, and amount
+  hash := sha3.Sum512([]byte("Goatnickels baby!"))
+  pub := "goat_04c12951412edfc215fe6d288491eb1251e2d8d99375c01049588dd228c6346f068246353d84702418f797d672af512d89742f6842b32f43541ea703f08170a67687f75fe0c6f15bd518764dee5476c86f9ba33f28036a76d018c1d7c8b14c307f"
+  //remove goat_ from key
+  pub = pub[4:]
+  
+  //TODO: convert r and s back
+
+
+  //verify signature
+  ecdsa.Verify(*pub, hash, t.R, t.S)
+
+}
