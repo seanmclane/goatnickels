@@ -273,7 +273,7 @@ type AccountResponse struct {
   PublicKey string `json:"public_key"`
 }
 
-func CreateNewAccount() {
+func GenerateAccount() {
   //create the keypair
   priv, err := ecdsa.GenerateKey(elliptic.P384(), rand.Reader)
   if err != nil {
@@ -298,9 +298,8 @@ func CreateNewAccount() {
 }
 
 //TODO: make this real and not a test of some hardcoded values
-func SignTransaction(t *Transaction) (r, s string) {
+func SignTransaction(t *Transaction, private_key string) (r, s string) {
   hash := HashTransaction(t)
-  private_key := "8b63849798d4633fe16553d428fdd50a1214296f0e02e5ebd0a7c78040a84775153a4dcacfc9dc7f4aeab9cc981fbb78"
   //recreate ecdsa.PrivateKey from private_key
   byte_key, _ := hex.DecodeString(private_key)
   bigint_key := new(big.Int).SetBytes(byte_key)
@@ -308,8 +307,10 @@ func SignTransaction(t *Transaction) (r, s string) {
   priv.PublicKey.Curve = elliptic.P384()
   priv.PublicKey.X, priv.PublicKey.Y = priv.PublicKey.Curve.ScalarBaseMult(byte_key)
   priv.D = bigint_key
-  //TODO: handle error
-  r_int, s_int, _ := ecdsa.Sign(rand.Reader, priv, hash)
+  r_int, s_int, err := ecdsa.Sign(rand.Reader, priv, hash)
+  if err != nil {
+    fmt.Println("error:", err)
+  }
   r = hex.EncodeToString(r_int.Bytes())
   s = hex.EncodeToString(s_int.Bytes())
   return r, s
