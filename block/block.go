@@ -59,8 +59,8 @@ type Block struct {
   Index int `json:"index"`
   Timestamp int `json:"timestamp"`
   Data Data `json:"data"`
-  LastHash [64]byte `json:"last_hash"`
-  Hash [64]byte `json:"hash"`
+  LastHash []byte `json:"last_hash"`
+  Hash []byte `json:"hash"`
 }
 
 type StoredBlock struct {
@@ -99,7 +99,8 @@ func (b *Block) HashBlock() {
   //TODO: handle error
   hash_data, _ := json.Marshal(b.Data)
   block_string := strconv.Itoa(b.Index)+strconv.Itoa(b.Timestamp)+string(hash_data)+hex.EncodeToString(b.LastHash[:])
-  b.Hash = sha3.Sum512([]byte(block_string))
+  fixed_hash := sha3.Sum512([]byte(block_string))
+  b.Hash = fixed_hash[:]
 }
 
 func CreateGenesisBlock() {
@@ -120,12 +121,16 @@ func CreateGenesisBlock() {
     Transactions: nil,
   }
 
+  //convert [64]byte to []byte
+  fixed_hash := sha3.Sum512([]byte("Goatnickels baby!"))
+  hash := fixed_hash[:]
+
   //genesis block for now
   b := Block {
     Index: 1,
     Timestamp: 0, //TODO: convert this to the birthdate of GoatNickels
     Data: data,
-    LastHash: sha3.Sum512([]byte("Goatnickels baby!")),
+    LastHash: hash,
   }
 
   b.HashBlock()
@@ -198,17 +203,31 @@ func DescribeBlock(b Block) {
   fmt.Println("\n\n")
 }
 
+func AddTransaction(t *Transaction) (ok bool) {
+  ok = VerifyTransaction(t)
+  if ok != true {
+    return false
+  }
+  CandidateSet = append(CandidateSet, *t)
+  return ok
+}
+
+
+
 func (d *Data) ApplyTransactionsToState() {
   //add and subtract from accounts
   for _, txion := range CandidateSet {
     //TODO: check if transaction results in negative balance
     //TODO: check if nonce is being reused
+    ok := true
+    if ok == true {
+      fnb := d.State[txion.From].Balance - txion.Amount
+      d.State[txion.From] = Account{Balance: fnb} 
+      tnb := d.State[txion.To].Balance + txion.Amount
+      d.State[txion.To] = Account{Balance: tnb} 
+    }
+    //TODO: else mark transaction as failed and do something with it?
 
-
-    fnb := d.State[txion.From].Balance - txion.Amount
-    d.State[txion.From] = Account{Balance: fnb} 
-    tnb := d.State[txion.To].Balance + txion.Amount
-    d.State[txion.To] = Account{Balance: tnb} 
   }
   //reset candidate transactions to apply
   CandidateSet = nil
@@ -280,39 +299,65 @@ func CreateNewAccount() {
 
 //TODO: make this real and not a test of some hardcoded values
 func SignTransaction(t *Transaction) (r, s string) {
-  hash := sha3.Sum512([]byte("Goatnickels baby!"))
+  hash := HashTransaction(t)
   private_key := "8b63849798d4633fe16553d428fdd50a1214296f0e02e5ebd0a7c78040a84775153a4dcacfc9dc7f4aeab9cc981fbb78"
-  //recreate ecdsa.PrivateKey from priv
+  //recreate ecdsa.PrivateKey from private_key
   byte_key, _ := hex.DecodeString(private_key)
   bigint_key := new(big.Int).SetBytes(byte_key)
   priv := new(ecdsa.PrivateKey)
   priv.PublicKey.Curve = elliptic.P384()
   priv.PublicKey.X, priv.PublicKey.Y = priv.PublicKey.Curve.ScalarBaseMult(byte_key)
-
+  priv.D = bigint_key
   //TODO: handle error
   r_int, s_int, _ := ecdsa.Sign(rand.Reader, priv, hash)
-  r := hex.EncodeToString(r_int)
-  s := hex.EncodeToString(s_int.Bytes())
+  r = hex.EncodeToString(r_int.Bytes())
+  s = hex.EncodeToString(s_int.Bytes())
   return r, s
 }
 
-func HashTransaction(t *Transaction) (h string) {
-  h := hex.EncodeToString(sha3.Sum512([]byte("Goatnickels baby!")))
-  //TODO: hash the actual transaction
+func HashTransaction(t *Transaction) (h []byte) {
+  hash_string := t.To+t.From+strconv.Itoa(t.Amount)+strconv.Itoa(t.Nonce)
+  fixed_hash := sha3.Sum512([]byte(hash_string))
+  h = fixed_hash[:]
+  return h
 }
 
-func (t *Transaction) VerifySignature() {
-  //check if t.Signature ok with public key?
+func VerifyTransaction(t *Transaction) (ok bool) {
+  //check if t.R and t.S ok with public key
   //what is being signed exactly? hash of transaction nonce, to, from, and amount
-  hash := sha3.Sum512([]byte("Goatnickels baby!"))
-  pub := "goat_04c12951412edfc215fe6d288491eb1251e2d8d99375c01049588dd228c6346f068246353d84702418f797d672af512d89742f6842b32f43541ea703f08170a67687f75fe0c6f15bd518764dee5476c86f9ba33f28036a76d018c1d7c8b14c307f"
+  hash := HashTransaction(t)
+  //public_key := "goat_04c12951412edfc215fe6d288491eb1251e2d8d99375c01049588dd228c6346f068246353d84702418f797d672af512d89742f6842b32f43541ea703f08170a67687f75fe0c6f15bd518764dee5476c86f9ba33f28036a76d018c1d7c8b14c307f"
+  //check that key is well formed
+  if len(t.From) < 100 {
+    return false
+  }
   //remove goat_ from key
-  pub = pub[4:]
-  
-  //TODO: convert r and s back
-
-
+  public_key := t.From[5:]
+  //recreate ecdsa.PublicKey from pub
+  byte_key, err := hex.DecodeString(public_key)
+  if err != nil {
+    fmt.Println("error:", err)
+  }
+  x, y := elliptic.Unmarshal(elliptic.P384(), byte_key)
+  if x == nil || y == nil {
+    return false
+  }
+  pub := new(ecdsa.PublicKey)
+  pub.Curve = elliptic.P384()
+  pub.X, pub.Y = x, y
+  //convert r and s back to big ints
+  byte_r, err := hex.DecodeString(t.R)
+  if err != nil {
+    fmt.Println("error:", err)
+  }
+  r := new(big.Int).SetBytes(byte_r)
+  byte_s, err := hex.DecodeString(t.S)
+  if err != nil {
+    fmt.Println("error:", err)
+  }
+  s := new(big.Int).SetBytes(byte_s)
   //verify signature
-  ecdsa.Verify(*pub, hash, t.R, t.S)
+  ok = ecdsa.Verify(pub, hash, r, s)
+  return ok
 
 }

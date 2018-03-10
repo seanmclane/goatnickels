@@ -1,6 +1,7 @@
 package handler
 
 import (
+  "strconv"
   "encoding/json"
   "net/http"
   "io/ioutil"
@@ -28,21 +29,18 @@ func AddTxion(w http.ResponseWriter, r *http.Request) {
     http.Error(w, err.Error(), http.StatusInternalServerError)
   }
 
-  var response block.Transaction
-  err = json.Unmarshal(body, &response)
+  var txion block.Transaction
+  err = json.Unmarshal(body, &txion)
   if err != nil {
     http.Error(w, err.Error(), http.StatusInternalServerError)
   }
 
-  block.CandidateSet = append(block.CandidateSet, response)
+  ok := block.AddTransaction(&txion)
 
-  bytes, err := json.Marshal(block.CandidateSet)
-  if err != nil {
-    http.Error(w, err.Error(), http.StatusInternalServerError)
-  }
+  response := []byte(`{"success":`+strconv.FormatBool(ok)+"}")
 
   w.Header().Set("Content-Type", "application/json; charset=UTF-8")
   w.WriteHeader(http.StatusCreated)
-  w.Write(bytes)
+  w.Write(response)
 
 }
