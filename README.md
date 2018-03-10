@@ -9,8 +9,7 @@ Each block includes a data element. Data is made of two arrays: accounts and tra
 ### Accounts
 
 [{
-  "account": "HASH",
-  "balance": 123792167
+  "account": {"balance": 123792167}
 }]
 
 ### Transactions
@@ -19,6 +18,9 @@ Each block includes a data element. Data is made of two arrays: accounts and tra
   "from": "HASH",
   "to": "HASH",
   "amount": 32134967423
+  "nonce": 1,
+  "r": "HASH",
+  "s": "HASH"
 }]
 
 ## Consensus Algorithm - TO BE IMPLEMENTED
