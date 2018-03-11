@@ -46,6 +46,7 @@ func main() {
 
     s.HandleFunc("/", handler.Index)
     s.HandleFunc("/txion", handler.AddTxion)
+    s.HandleFunc("/sign", handler.SignTxion)
 
     go mine()
     log.Fatal(http.ListenAndServe(":3000", r))

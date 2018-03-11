@@ -19,7 +19,6 @@ import(
 //does this belong here?
 type Config struct {
   Directory string `json:"directory"`
-  LastBlock int `json:"last_block"`
 }
 
 //load config
@@ -89,6 +88,11 @@ type Transaction struct {
   S string `json:"s"`
 }
 
+type Signature struct {
+  R string `json:"r"`
+  S string `json:"s"`
+}
+
 func AsciiGoat() {
   a := "\x20 \x20 \x20 \x20 \x20 \x20 \x20 \x20 \x20 \x20 \x20 \x20 \x20 \x2c \x2d \x2d \x2e \x5f \x2c \x2d \x2d \x2e \x0a \x20 \x20 \x20 \x20 \x20 \x20 \x20 \x20 \x20 \x20 \x20 \x2c \x27 \x20 \x20 \x2c \x27 \x20 \x20 \x20 \x2c \x2d \x60 \x2e \x0a \x28 \x60 \x2d \x2e \x5f \x5f \x20 \x20 \x20 \x20 \x2f \x20 \x20 \x2c \x27 \x20 \x20 \x20 \x2f \x0a \x20 \x60 \x2e \x20 \x20 \x20 \x60 \x2d \x2d \x27 \x20 \x20 \x20 \x20 \x20 \x20 \x20 \x20 \x5c \x5f \x5f \x2c \x2d \x2d \x27 \x2d \x2e \x0a \x20 \x20 \x20 \x60 \x2d \x2d \x2f \x20 \x20 \x20 \x20 \x20 \x20 \x20 \x2c \x2d \x2e \x20 \x20 \x5f \x5f \x5f \x5f \x5f \x5f \x2f \x0a \x20 \x20 \x20 \x20 \x20 \x28 \x6f \x2d \x2e \x20 \x20 \x20 \x20 \x20 \x2c \x6f \x2d \x20 \x2f \x0a \x20 \x20 \x20 \x20 \x20 \x20 \x60 \x2e \x20 \x3b \x20 \x20 \x20 \x20 \x20 \x20 \x20 \x20 \x5c \x0a \x20 \x20 \x20 \x20 \x20 \x20 \x20 \x7c \x3a \x20 \x20 \x20 \x20 \x20 \x20 \x20 \x20 \x20 \x20 \x5c \x0a \x20 \x20 \x20 \x20 \x20 \x20 \x2c \x27 \x60 \x20 \x20 \x20 \x20 \x20 \x20 \x20 \x2c \x20 \x20 \x20 \x5c \x0a \x20 \x20 \x20 \x20 \x20 \x28 \x6f \x20 \x6f \x20 \x2c \x20 \x20 \x2d \x2d \x27 \x20 \x20 \x20 \x20 \x20 \x3a \x0a \x20 \x20 \x20 \x20 \x20 \x20 \x5c \x2d \x2d \x27 \x2c \x27 \x2e \x20 \x20 \x20 \x20 \x20 \x20 \x20 \x20 \x3b \x0a \x20 \x20 \x20 \x20 \x20 \x20 \x20 \x60 \x3b \x3b \x20 \x20 \x3a \x20 \x20 \x20 \x20 \x20 \x20 \x20 \x2f \x0a \x20 \x20 \x20 \x20 \x20 \x20 \x20 \x20 \x3b \x27 \x20 \x20 \x3b \x20 \x20 \x2c \x27 \x20 \x2c \x27 \x0a \x20 \x20 \x20 \x20 \x20 \x20 \x20 \x20 \x2c \x27 \x2c \x27 \x20 \x20 \x3a \x20 \x20 \x27 \x0a \x20 \x20 \x20 \x20 \x20 \x20 \x20 \x20 \x5c \x20 \x5c \x20 \x20 \x20 \x3a \x0a \x20 \x20 \x20 \x20 \x20 \x20 \x20 \x20 \x20 \x60"
   fmt.Println(a, "\n")
@@ -108,13 +112,18 @@ func CreateGenesisBlock() {
   //manually adding accounts for now
   Accounts = make(map[string]Account)
 
-  Accounts["sean"] = Account{
-    Balance: 50884325,
+  Accounts["goat_04dbb67ae9650ca3258071909f74be5400fe53fc2e5dcc82103020f3aeefeee5f9980c4c05bb8696215458dfa7ddaa1505d2826cab3d246b8930b0694f766a22f8bb63932368c0b12bf80cfaee8a18db1d7ce19df0a84215d20b0bbfbd30d95c25"] = Account{
+    Balance: 50884323425,
   }
-  Accounts["kate"] = Account{
-    Balance: 94043214,
+  Accounts["goat_04ab1594a3b65e440653b1a54952aee3cb7f5c41cb476f7ecd3ce58dc23cef0923beb45fc275ff4149cd9f0417f8ca885e882b3b68d00bab2988b22f2eaf7f6683ba3e672abd668e5788a8ecb4d055cd024f004ff03db06158f18e5bd02914685a"] = Account{
+    Balance: 94043534214,
   }
-
+  Accounts["goat_04c7cb2cef7da5cda83333f34fba7f07b3d1a7572ca909487c7ed20d147706b731e26983c18659bc1caf260a4fd4fc390d9bec208c92d123498faad57ae365ba3aebcd4a93e74802adee03cfbac8f71ed7f5d00824de59bf292c20b2b73bd3228d"] = Account{
+    Balance: 38763423645,
+  }
+  Accounts["goat_045b4dfabe49048ef6fb6e47fc4e2b33dd54e46b3ed4ab008f8dce7457f588f7a6975690328db4bd48eb874ff909c579fe37ae4f39e9b9b10ac1f2f49083c7d2d8fe91ff5314b2742d58e894681d55682876417f33f851e8091f9c00045a7a9ebc"] = Account{
+    Balance: 76457654265,
+  }
   //set arbitrary data
   data := Data{
     State: Accounts,
@@ -144,12 +153,29 @@ func InitializeState() {
   //if no blockchain, start a new one
   //TODO: if no blockchain, get it from the network instead
   config := LoadConfig()
-  if config.LastBlock < 1 {
-    CreateGenesisBlock()
-    config.LastBlock = 1
+  files, err := ioutil.ReadDir(config.Directory)
+  if err != nil {
+    panic(err)
   }
 
-  b, err := ioutil.ReadFile(string(config.Directory)+strconv.Itoa(config.LastBlock))
+  var max int64
+  max = 0
+  for _, file := range files {
+    cur, err := strconv.ParseInt(file.Name(), 10, 0)
+    if err != nil {
+      fmt.Println("error:", err)
+    }
+    if cur > max {
+      max = cur
+    }
+  }
+
+  if max < 1 {
+    CreateGenesisBlock()
+    max = 1
+  }
+
+  b, err := ioutil.ReadFile(string(config.Directory)+strconv.Itoa(int(max)))
   if err != nil {
     panic(err)
   }
@@ -194,13 +220,22 @@ func NextBlock() {
 }
 
 func DescribeBlock(b Block) {
+  fmt.Printf("----------------------------------------------------------------------------------------------\n\n")
   fmt.Println("Block ID:", b.Index)
-  fmt.Println("Block State:", b.Data.State)
-  fmt.Println("Block Transactions:", b.Data.Transactions)
+  fmt.Printf("\n---Block State---\n")
+  for key, val := range b.Data.State {
+    fmt.Printf("Account: %s\nBalance: %d\n", key, val.Balance)
+  }
+  fmt.Printf("\n---Block Transactions---\n")
+  for _, txion := range b.Data.Transactions {
+    fmt.Printf("To: %s\nFrom: %s\nAmount: %d\n", txion.To, txion.From, txion.Amount)
+  }
+  fmt.Printf("\n---Hashes---\n")
   fmt.Println("Last Hash:", hex.EncodeToString(b.LastHash[:]))
   fmt.Println("Block Hash:", hex.EncodeToString(b.Hash[:]))
+  fmt.Println("\n")
   fmt.Println("Block Time:", time.Unix(int64(b.Timestamp),0))
-  fmt.Println("\n\n")
+  fmt.Println("----------------------------------------------------------------------------------------------")
 }
 
 func AddTransaction(t *Transaction) (ok bool) {
@@ -250,20 +285,6 @@ func (b *Block) WriteBlockToLocalStorage() {
       panic(err)
   }
 
-  //make sure config has record of last block mined
-  //should this be from checking the file names locally for now?
-  //TODO: refactor this when setting last block mined from checking network
-  config.LastBlock = b.Index
-  cout, err := json.Marshal(config)
-  if err != nil {
-    fmt.Println("error:", err)
-  }
-  
-  err = ioutil.WriteFile("config.json", cout, 0644)
-  if err != nil {
-      panic(err)
-  }
-
   fmt.Println("Block written successfully!")
 
 }
@@ -301,7 +322,10 @@ func GenerateAccount() {
 func SignTransaction(t *Transaction, private_key string) (r, s string) {
   hash := HashTransaction(t)
   //recreate ecdsa.PrivateKey from private_key
-  byte_key, _ := hex.DecodeString(private_key)
+  byte_key, err := hex.DecodeString(private_key)
+  if err != nil {
+    fmt.Println("error:", err)
+  }
   bigint_key := new(big.Int).SetBytes(byte_key)
   priv := new(ecdsa.PrivateKey)
   priv.PublicKey.Curve = elliptic.P384()
