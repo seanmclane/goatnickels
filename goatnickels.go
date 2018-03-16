@@ -13,7 +13,7 @@ import(
 
 func mine() {
   for {
-    time.Sleep(15 * time.Second)
+    time.Sleep(30 * time.Second)
     block.NextBlock()
   }
 }
@@ -29,7 +29,7 @@ func main() {
   to_flag := flag.String("to", "", "what account should be credited in this transaction?")
   from_flag := flag.String("from", "", "what account should be debited in this transaction?")
   amount_flag := flag.Int("amount", 0, "how much do you want to send?")
-  //TODO: add nonce or figure out where to source nonce
+  //TODO: add sequence or figure out where to source sequence
   private_key_flag := flag.String("private-key", "", "needed to sign and send a transaction")
 
   flag.Parse()
@@ -63,7 +63,7 @@ func main() {
       From: *from_flag,
       //From: "goat_04c12951412edfc215fe6d288491eb1251e2d8d99375c01049588dd228c6346f068246353d84702418f797d672af512d89742f6842b32f43541ea703f08170a67687f75fe0c6f15bd518764dee5476c86f9ba33f28036a76d018c1d7c8b14c307f",
       Amount: *amount_flag,
-      Nonce: 1,
+      Sequence: 1,
     }
     //private_key := "8b63849798d4633fe16553d428fdd50a1214296f0e02e5ebd0a7c78040a84775153a4dcacfc9dc7f4aeab9cc981fbb78"
     r, s := t.SignTransaction(*private_key_flag)

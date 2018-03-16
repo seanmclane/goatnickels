@@ -77,13 +77,14 @@ type Data struct {
 
 type Account struct {
   Balance int `json:"balance"`
+  Sequence int `json:"sequence"`
 }
 
 type Transaction struct {
   From string `json:"from"`
   To string `json:"to"`
   Amount int `json:"amount"`
-  Nonce int `json:"nonce"`
+  Sequence int `json:"sequence"`
   R string `json:"r"`
   S string `json:"s"`
 }
@@ -114,15 +115,19 @@ func CreateGenesisBlock() {
 
   Accounts["goat_04dbb67ae9650ca3258071909f74be5400fe53fc2e5dcc82103020f3aeefeee5f9980c4c05bb8696215458dfa7ddaa1505d2826cab3d246b8930b0694f766a22f8bb63932368c0b12bf80cfaee8a18db1d7ce19df0a84215d20b0bbfbd30d95c25"] = Account{
     Balance: 50884323425,
+    Sequence: 0,
   }
   Accounts["goat_04ab1594a3b65e440653b1a54952aee3cb7f5c41cb476f7ecd3ce58dc23cef0923beb45fc275ff4149cd9f0417f8ca885e882b3b68d00bab2988b22f2eaf7f6683ba3e672abd668e5788a8ecb4d055cd024f004ff03db06158f18e5bd02914685a"] = Account{
     Balance: 94043534214,
+    Sequence: 0,
   }
   Accounts["goat_04c7cb2cef7da5cda83333f34fba7f07b3d1a7572ca909487c7ed20d147706b731e26983c18659bc1caf260a4fd4fc390d9bec208c92d123498faad57ae365ba3aebcd4a93e74802adee03cfbac8f71ed7f5d00824de59bf292c20b2b73bd3228d"] = Account{
     Balance: 38763423645,
+    Sequence: 0,
   }
   Accounts["goat_045b4dfabe49048ef6fb6e47fc4e2b33dd54e46b3ed4ab008f8dce7457f588f7a6975690328db4bd48eb874ff909c579fe37ae4f39e9b9b10ac1f2f49083c7d2d8fe91ff5314b2742d58e894681d55682876417f33f851e8091f9c00045a7a9ebc"] = Account{
     Balance: 76457654265,
+    Sequence: 0,
   }
   //set arbitrary data
   data := Data{
@@ -186,20 +191,18 @@ func InitializeState() {
     fmt.Println("error:", err)
   }
 
-  //load accounts into Accounts from LastGoatBlock
-  Accounts = make(map[string]Account)
-  Accounts = LastGoatBlock.Data.State
-
 }
 
-func CreateBlockData() (data Data){
+func MakeNextBlockData() (data Data){
   
+  var empty_txions []Transaction
+
   data = Data{
     State: LastGoatBlock.Data.State,
-    Transactions: CandidateSet,
+    Transactions: empty_txions,
   }
 
-  data.ApplyTransactionsToState()
+  data.ApplyTransactions()
   
   return data
 }
@@ -209,7 +212,7 @@ func NextBlock() {
   next_block := Block {
     Index: LastGoatBlock.Index+1,
     Timestamp: int(time.Now().UTC().Unix()),
-    Data: CreateBlockData(),
+    Data: MakeNextBlockData(),
     LastHash: LastGoatBlock.Hash,
   }
   
@@ -228,7 +231,7 @@ func DescribeBlock(b Block) {
   fmt.Println("Block ID:", b.Index)
   fmt.Printf("\n---Block State---\n")
   for key, val := range b.Data.State {
-    fmt.Printf("Account: %s\nBalance: %d\n", key, val.Balance)
+    fmt.Printf("Account: %s\nBalance: %d\nSequence: %d\n", key, val.Balance, val.Sequence)
   }
   fmt.Printf("\n---Block Transactions---\n")
   for _, txion := range b.Data.Transactions {
@@ -251,22 +254,30 @@ func (t *Transaction) AddTransaction() (ok bool) {
   return ok
 }
 
-
-
-func (d *Data) ApplyTransactionsToState() {
+func (d *Data) ApplyTransactions() {
   //add and subtract from accounts
   for _, txion := range CandidateSet {
-    //TODO: check if transaction results in negative balance
-    //TODO: check if nonce is being reused
-    ok := true
+    //check if sequence is incremented by one
+    ok := txion.VerifySequence()
     if ok == true {
+      //increment account sequence and debit balance
       fnb := d.State[txion.From].Balance - txion.Amount
-      d.State[txion.From] = Account{Balance: fnb} 
+      d.State[txion.From] = Account{
+        Balance: fnb,
+        Sequence: txion.Sequence,
+      }
+      //credit balance
       tnb := d.State[txion.To].Balance + txion.Amount
-      d.State[txion.To] = Account{Balance: tnb} 
-    }
-    //TODO: else mark transaction as failed and do something with it?
+      d.State[txion.To] = Account{
+        Balance: tnb,
+        Sequence: d.State[txion.To].Sequence,
+      } 
+      //add valid transaction to transaction list
+      d.Transactions = append(d.Transactions, txion)
+    } else {
+      //TODO: else mark transaction as failed and do something with it? broadcast to network?
 
+    }
   }
   //reset candidate transactions to apply
   CandidateSet = nil
@@ -345,7 +356,7 @@ func (t *Transaction) SignTransaction (private_key string) (r, s string) {
 }
 
 func (t *Transaction) HashTransaction() (h []byte) {
-  hash_string := t.To+t.From+strconv.Itoa(t.Amount)+strconv.Itoa(t.Nonce)
+  hash_string := t.To+t.From+strconv.Itoa(t.Amount)+strconv.Itoa(t.Sequence)
   fixed_hash := sha3.Sum512([]byte(hash_string))
   h = fixed_hash[:]
   return h
@@ -353,7 +364,7 @@ func (t *Transaction) HashTransaction() (h []byte) {
 
 func (t *Transaction) VerifyTransaction() (ok bool) {
   //check if t.R and t.S ok with public key
-  //what is being signed exactly? hash of transaction nonce, to, from, and amount
+  //what is being signed exactly? hash of transaction sequence, to, from, and amount
   hash := t.HashTransaction()
   //public_key := "goat_04c12951412edfc215fe6d288491eb1251e2d8d99375c01049588dd228c6346f068246353d84702418f797d672af512d89742f6842b32f43541ea703f08170a67687f75fe0c6f15bd518764dee5476c86f9ba33f28036a76d018c1d7c8b14c307f"
   //check that key is well formed
@@ -389,6 +400,7 @@ func (t *Transaction) VerifyTransaction() (ok bool) {
   sig_ok := ecdsa.Verify(pub, hash, r, s)
   //verify balance is sufficient
   spend_ok := t.VerifyNegativeSpend()
+  //do not check sequence here, so you can have more than one transaction per block
   if sig_ok && spend_ok {
     return true
   } else {
@@ -398,9 +410,18 @@ func (t *Transaction) VerifyTransaction() (ok bool) {
 }
 
 func (t *Transaction) VerifyNegativeSpend() (ok bool) {
-  if Accounts[t.From].Balance < t.Amount {
+  if LastGoatBlock.Data.State[t.From].Balance < t.Amount {
     return false
   } else {
     return true
+  }
+}
+
+func (t *Transaction) VerifySequence() (ok bool) {
+  //sequence must be current account sequence number plus one
+  if t.Sequence == LastGoatBlock.Data.State[t.From].Sequence + 1 {
+    return true
+  } else {
+    return false
   }
 }
