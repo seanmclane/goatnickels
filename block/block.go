@@ -186,6 +186,10 @@ func InitializeState() {
     fmt.Println("error:", err)
   }
 
+  //load accounts into Accounts from LastGoatBlock
+  Accounts = make(map[string]Account)
+  Accounts = LastGoatBlock.Data.State
+
 }
 
 func CreateBlockData() (data Data){
@@ -382,7 +386,21 @@ func (t *Transaction) VerifyTransaction() (ok bool) {
   }
   s := new(big.Int).SetBytes(byte_s)
   //verify signature
-  ok = ecdsa.Verify(pub, hash, r, s)
-  return ok
+  sig_ok := ecdsa.Verify(pub, hash, r, s)
+  //verify balance is sufficient
+  spend_ok := t.VerifyNegativeSpend()
+  if sig_ok && spend_ok {
+    return true
+  } else {
+    return false
+  }
 
+}
+
+func (t *Transaction) VerifyNegativeSpend() (ok bool) {
+  if Accounts[t.From].Balance < t.Amount {
+    return false
+  } else {
+    return true
+  }
 }
