@@ -45,6 +45,28 @@ func AddTxion(w http.ResponseWriter, r *http.Request) {
 
 }
 
+func GetTxions(w http.ResponseWriter, r *http.Request) {
+  
+  bytes, err := json.Marshal(block.CandidateSet)
+  if err != nil {
+    http.Error(w, err.Error(), http.StatusInternalServerError)
+  }
+
+  w.Header().Set("Content-Type", "application/json; charset=UTF-8")
+  w.WriteHeader(http.StatusOK)
+  w.Write(bytes)
+
+}
+
+
+
+
+
+
+
+
+
+
 
 //more for ease of testing than for true use, since sending your private key to an unknown server is bad...
 type SignatureRequest struct {

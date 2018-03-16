@@ -45,7 +45,9 @@ func main() {
     s := r.PathPrefix("/api/v1").Subrouter()
 
     s.HandleFunc("/", handler.Index)
-    s.HandleFunc("/txion", handler.AddTxion)
+    //TODO: specify type of http request to handle
+    s.HandleFunc("/txion", handler.AddTxion).Methods("POST")
+    s.HandleFunc("/txion", handler.GetTxions).Methods("GET")
     s.HandleFunc("/sign", handler.SignTxion)
 
     go mine()
