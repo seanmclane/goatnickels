@@ -6,7 +6,7 @@ import (
   "net/http"
   "io/ioutil"
   "github.com/seanmclane/goatnickels/block"
-//  "github.com/gorilla/mux"
+  "github.com/gorilla/mux"
 )
 
 func Index(w http.ResponseWriter, r *http.Request) {
@@ -58,6 +58,30 @@ func GetTxions(w http.ResponseWriter, r *http.Request) {
 
 }
 
+func GetAcct(w http.ResponseWriter, r *http.Request) {
+  vars := mux.Vars(r)
+  key := vars["key"]
+
+  val := block.LastGoatBlock.Data.State[key]
+
+  empty := block.Account{}
+
+  if val != empty {
+    bytes, err := json.Marshal(val)
+    if err != nil {
+      http.Error(w, err.Error(), http.StatusInternalServerError)
+    }
+    w.Header().Set("Content-Type", "application/json; charset=UTF-8")
+    w.WriteHeader(http.StatusOK)
+    w.Write(bytes)
+  } else {
+    bytes := []byte(`{"error":"Account not found"}`)
+    w.Header().Set("Content-Type", "application/json; charset=UTF-8")
+    w.WriteHeader(http.StatusNotFound)
+    w.Write(bytes)
+  }  
+
+}
 
 
 

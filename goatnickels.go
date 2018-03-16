@@ -48,6 +48,7 @@ func main() {
     //TODO: specify type of http request to handle
     s.HandleFunc("/txion", handler.AddTxion).Methods("POST")
     s.HandleFunc("/txion", handler.GetTxions).Methods("GET")
+    s.HandleFunc("/acct/{key}", handler.GetAcct).Methods("GET")
     s.HandleFunc("/sign", handler.SignTxion)
 
     go mine()
