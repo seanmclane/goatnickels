@@ -238,8 +238,8 @@ func DescribeBlock(b Block) {
   fmt.Println("----------------------------------------------------------------------------------------------")
 }
 
-func AddTransaction(t *Transaction) (ok bool) {
-  ok = VerifyTransaction(t)
+func (t *Transaction) AddTransaction() (ok bool) {
+  ok = t.VerifyTransaction()
   if ok != true {
     return false
   }
@@ -320,7 +320,7 @@ func GenerateAccount() {
 
 //TODO: make this real and not a test of some hardcoded values
 func (t *Transaction) SignTransaction (private_key string) (r, s string) {
-  hash := HashTransaction(t)
+  hash := t.HashTransaction()
   //recreate ecdsa.PrivateKey from private_key
   byte_key, err := hex.DecodeString(private_key)
   if err != nil {
@@ -340,17 +340,17 @@ func (t *Transaction) SignTransaction (private_key string) (r, s string) {
   return r, s
 }
 
-func HashTransaction(t *Transaction) (h []byte) {
+func (t *Transaction) HashTransaction() (h []byte) {
   hash_string := t.To+t.From+strconv.Itoa(t.Amount)+strconv.Itoa(t.Nonce)
   fixed_hash := sha3.Sum512([]byte(hash_string))
   h = fixed_hash[:]
   return h
 }
 
-func VerifyTransaction(t *Transaction) (ok bool) {
+func (t *Transaction) VerifyTransaction() (ok bool) {
   //check if t.R and t.S ok with public key
   //what is being signed exactly? hash of transaction nonce, to, from, and amount
-  hash := HashTransaction(t)
+  hash := t.HashTransaction()
   //public_key := "goat_04c12951412edfc215fe6d288491eb1251e2d8d99375c01049588dd228c6346f068246353d84702418f797d672af512d89742f6842b32f43541ea703f08170a67687f75fe0c6f15bd518764dee5476c86f9ba33f28036a76d018c1d7c8b14c307f"
   //check that key is well formed
   if len(t.From) < 100 {

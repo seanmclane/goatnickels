@@ -35,7 +35,7 @@ func AddTxion(w http.ResponseWriter, r *http.Request) {
     http.Error(w, err.Error(), http.StatusInternalServerError)
   }
 
-  ok := block.AddTransaction(&txion)
+  ok := txion.AddTransaction()
 
   response := []byte(`{"success":`+strconv.FormatBool(ok)+"}")
 
