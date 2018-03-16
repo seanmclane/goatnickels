@@ -66,7 +66,7 @@ func main() {
       Nonce: 1,
     }
     //private_key := "8b63849798d4633fe16553d428fdd50a1214296f0e02e5ebd0a7c78040a84775153a4dcacfc9dc7f4aeab9cc981fbb78"
-    r, s := block.SignTransaction(&t, *private_key_flag)
+    r, s := t.SignTransaction(*private_key_flag)
     fmt.Println("r:",r)
     fmt.Println("s:",s)
   }

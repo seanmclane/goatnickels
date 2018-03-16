@@ -319,7 +319,7 @@ func GenerateAccount() {
 }
 
 //TODO: make this real and not a test of some hardcoded values
-func SignTransaction(t *Transaction, private_key string) (r, s string) {
+func (t *Transaction) SignTransaction (private_key string) (r, s string) {
   hash := HashTransaction(t)
   //recreate ecdsa.PrivateKey from private_key
   byte_key, err := hex.DecodeString(private_key)

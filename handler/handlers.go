@@ -66,7 +66,7 @@ func SignTxion(w http.ResponseWriter, req *http.Request) {
     return
   }
 
-  r, s := block.SignTransaction(&sig_req.Transaction, sig_req.Private_key)
+  r, s := sig_req.Transaction.SignTransaction(sig_req.Private_key)
 
   var response []byte
   if r != "" && s != "" {
