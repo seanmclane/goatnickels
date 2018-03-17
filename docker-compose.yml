@@ -1,0 +1,8 @@
+version: '3'
+services:
+  goat1:
+    build: .
+  goat2:
+    build: .
+  goat3:
+    build: .
