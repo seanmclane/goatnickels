@@ -75,6 +75,9 @@ func main() {
   }
 
   if *test_flag == "y" {
-    fmt.Println("test")
+    config := block.LoadConfig()
+    for i := 0; i < 3; i++ {
+      fmt.Println(config.Nodes[i])
+    }
   }
 }

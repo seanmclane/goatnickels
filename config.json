@@ -1,1 +1,8 @@
-{"directory":"/Users/smclane/Desktop/goatchain/"}
+{
+  "directory":"/Users/smclane/Desktop/goatchain/",
+  "nodes": [
+    "goat1",
+    "goat2",
+    "goat3"
+  ]
+}

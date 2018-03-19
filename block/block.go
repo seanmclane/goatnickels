@@ -19,6 +19,7 @@ import(
 //does this belong here?
 type Config struct {
   Directory string `json:"directory"`
+  Nodes []string `json:"nodes"`
 }
 
 //load config
