@@ -83,7 +83,41 @@ func GetAcct(w http.ResponseWriter, r *http.Request) {
 
 }
 
+func GetBlock(w http.ResponseWriter, r *http.Request) {
+  vars := mux.Vars(r)
+  index := vars["index"]
 
+  bytes := block.ReadBlockFromLocalStorage(index)
+
+  if bytes != nil { 
+    w.Header().Set("Content-Type", "application/json; charset=UTF-8")
+    w.WriteHeader(http.StatusOK)
+    w.Write(bytes)
+  } else {
+    bytes := []byte(`{"error":"Block not found"}`)
+    w.Header().Set("Content-Type", "application/json; charset=UTF-8")
+    w.WriteHeader(http.StatusNotFound)
+    w.Write(bytes)
+  }  
+}
+
+type MaxBlockResponse struct {
+  MaxBlock int64 `json:"max_block"`
+}
+
+func GetMaxBlock(w http.ResponseWriter, r *http.Request) {
+  max := block.FindMaxBlock()
+  response := MaxBlockResponse{
+    MaxBlock: max,
+  }
+  bytes, err := json.Marshal(response)
+  if err != nil {
+      http.Error(w, err.Error(), http.StatusInternalServerError)
+  }
+  w.Header().Set("Content-Type", "application/json; charset=UTF-8")
+  w.WriteHeader(http.StatusOK)
+  w.Write(bytes)
+}
 
 
 

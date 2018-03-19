@@ -13,6 +13,7 @@ import(
   "crypto/rand"
   "math/big"
   "encoding/hex"
+  "net/http"
 )
 
 //define config structure
@@ -154,17 +155,65 @@ func CreateGenesisBlock() {
 
 }
 
+//TODO: figure out where to keep data structures and have one way imports
+type MaxBlockResponse struct {
+  MaxBlock int64 `json:"max_block"`
+}
+
 func InitializeState() {
   //check last block
   //if no blockchain, start a new one
   //TODO: if no blockchain, get it from the network instead
+  config := LoadConfig()
+
+  var max_list []int64
+  for key, node := range config.Nodes {
+    r, err := http.Get("http://"+node+":3000/api/v1/maxblock")
+    if err != nil {
+      fmt.Println("error:", err)
+    }
+    if r.Body != nil {
+      body, err := ioutil.ReadAll(r.Body)
+      if err != nil {
+        fmt.Println("error:", err)
+      }
+      var res MaxBlockResponse
+      _ = json.Unmarshal(body, res)
+      max_list[key] = res.MaxBlock
+      fmt.Println(node, max_list[key])
+    } else {
+      fmt.Println("No response from node:", node)
+    }
+  }
+  
+  //genesis block only created by calling function manually
+  //always check the network for max block, then start
+
+  max := FindMaxBlock()
+
+  b := ReadBlockFromLocalStorage(strconv.Itoa(int(max)))
+
+  //make bytestring to Block
+  err := json.Unmarshal(b, &LastGoatBlock)
+  if err != nil {
+    fmt.Println("error:", err)
+  }
+
+}
+
+func ReadBlockFromLocalStorage(index string) (b []byte) {
+  config := LoadConfig()
+  b, _ = ioutil.ReadFile(string(config.Directory)+index)
+  return b
+}
+
+func FindMaxBlock() (max int64) {
   config := LoadConfig()
   files, err := ioutil.ReadDir(config.Directory)
   if err != nil {
     panic(err)
   }
 
-  var max int64
   max = 0
   for _, file := range files {
     cur, err := strconv.ParseInt(file.Name(), 10, 0)
@@ -176,22 +225,7 @@ func InitializeState() {
     }
   }
 
-  if max < 1 {
-    CreateGenesisBlock()
-    max = 1
-  }
-
-  b, err := ioutil.ReadFile(string(config.Directory)+strconv.Itoa(int(max)))
-  if err != nil {
-    panic(err)
-  }
-
-  //make bytestring to Block
-  err = json.Unmarshal(b, &LastGoatBlock)
-  if err != nil {
-    fmt.Println("error:", err)
-  }
-
+  return max
 }
 
 func MakeNextBlockData() (data Data){

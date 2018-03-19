@@ -19,6 +19,7 @@ func mine() {
 }
 
 func main() {
+  genesis_flag := flag.String("genesis", "n", "create the genesis block?")
   serve_flag := flag.String("serve", "n", "y or n")
   acct_flag := flag.String("generate-acct", "n", "do you want generate a keypair for a new account?")
   sign_flag := flag.String("sign", "n", "do you want to sign a transaction?")
@@ -33,6 +34,10 @@ func main() {
   private_key_flag := flag.String("private-key", "", "needed to sign and send a transaction")
 
   flag.Parse()
+
+  if *genesis_flag == "y" {
+    block.CreateGenesisBlock()
+  }
 
   if *serve_flag == "y" {
     block.InitializeState()
@@ -49,6 +54,8 @@ func main() {
     s.HandleFunc("/txion", handler.AddTxion).Methods("POST")
     s.HandleFunc("/txion", handler.GetTxions).Methods("GET")
     s.HandleFunc("/acct/{key}", handler.GetAcct).Methods("GET")
+    s.HandleFunc("/block/{index}", handler.GetBlock).Methods("GET")
+    s.HandleFunc("/maxblock", handler.GetMaxBlock).Methods("GET")
     s.HandleFunc("/sign", handler.SignTxion)
 
     go mine()
