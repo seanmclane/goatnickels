@@ -166,14 +166,11 @@ func InitializeState() {
   //TODO: if no blockchain, get it from the network instead
   config := LoadConfig()
 
-  //allow other servers to come online for docker
-  time.Sleep(5 * time.Second)
-
   var max_list []int64
   for key, node := range config.Nodes {
     r, err := http.Get("http://"+node+":3000/api/v1/maxblock")
     if err != nil {
-      fmt.Println("error:", err)
+      panic(err)
     }
     if r.Body != nil {
       body, err := ioutil.ReadAll(r.Body)
