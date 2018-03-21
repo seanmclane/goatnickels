@@ -215,7 +215,7 @@ func GetMaxBlockFromNetwork() (max_list []int64){
 func GetBlockChainFromNetwork(local_max int64, network_max int64, node string) {
   for i := local_max+1; i <= network_max; i++ {
     //TODO get block from network, then write to local storage for each block
-    r, err := client.Get("http://"+node+":3000/api/v1/maxblock")
+    r, err := client.Get("http://"+node+":3000/api/v1/block/"+strconv.Itoa(int(i)))
     if err != nil {
       fmt.Println("could not get block from", node)
       fmt.Println("error:", err)
