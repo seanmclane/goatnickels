@@ -166,22 +166,19 @@ func InitializeState() {
   //TODO: if no blockchain, get it from the network instead
   config := LoadConfig()
 
-  var reqClient = &http.Client{
-      Timeout: time.Second * 10,
-    }
-
   var max_list []int64
   for key, node := range config.Nodes {
     max_list = append(max_list, 0)
     time.Sleep(5 * time.Second)
-    r, err := reqClient.Get("http://"+node+":3000/api/v1/maxblock")
+    r, err := http.Get("http://"+node+":3000/api/v1/maxblock")
     if err != nil {
-      fmt.Println("no respnse from node:", node)
+      fmt.Println("no response from node:", node)
     } else {
       body, err := ioutil.ReadAll(r.Body)
       if err != nil {
         fmt.Println("error:", err)
       }
+      r.Body.Close()
       var res MaxBlockResponse
       _ = json.Unmarshal(body, res)
       fmt.Println("Key:", key)
