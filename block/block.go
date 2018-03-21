@@ -177,7 +177,7 @@ func InitializeState() {
       if err != nil {
         fmt.Println("error:", err)
       }
-      fmt.Println("TESTBODYNOTNIL")
+      fmt.Println(key, "- body -", r.Body)
       var res MaxBlockResponse
       _ = json.Unmarshal(body, res)
       max_list[key] = res.MaxBlock
