@@ -174,13 +174,9 @@ func InitializeState() {
     if err != nil {
       fmt.Println("no response from node:", node)
     } else {
-      body, err := ioutil.ReadAll(r.Body)
-      if err != nil {
-        fmt.Println("error:", err)
-      }
-      r.Body.Close()
+      defer r.Body.Close()
       var res MaxBlockResponse
-      _ = json.Unmarshal(body, res)
+      err = json.NewDecoder(r.Body).Decode(&res)
       fmt.Println("Key:", key)
       fmt.Println("MaxBlock:", res.MaxBlock)
       fmt.Println("Full Body:", res)
