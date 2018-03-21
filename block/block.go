@@ -226,7 +226,6 @@ func GetBlockChainFromNetwork(local_max int64, network_max int64, node string) {
       b.WriteBlockToLocalStorage()
     }
     //TODO validate blocks!
-    fmt.Println(i)
   }
 }
 
@@ -364,7 +363,7 @@ func (b *Block) WriteBlockToLocalStorage() {
       panic(err)
   }
 
-  fmt.Println("Block written successfully!")
+  fmt.Println("Block "+strconv.Itoa(b.Index)+" written successfully!")
 
 }
 
