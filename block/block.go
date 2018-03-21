@@ -168,6 +168,7 @@ func InitializeState() {
 
   var max_list []int64
   for key, node := range config.Nodes {
+    time.Sleep(5 * time.Second)
     r, err := http.Get("http://"+node+":3000/api/v1/maxblock")
     if err != nil {
       fmt.Println("no respnse from node:", node)
