@@ -173,6 +173,7 @@ func InitializeState() {
     r, err := http.Get("http://"+node+":3000/api/v1/maxblock")
     if err != nil {
       fmt.Println("no response from node:", node)
+      fmt.Println("error:", err)
     } else {
       defer r.Body.Close()
       var res MaxBlockResponse
