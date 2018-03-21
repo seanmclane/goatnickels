@@ -50,7 +50,10 @@ var Accounts map[string]Account
 //create candidate set of transactions
 var CandidateSet []Transaction
 
-//specify json lowercase values with `json:"test"`
+// create http client for all network requests
+var client = &http.Client{
+  Timeout: time.Second * 10,
+  }
 
 //removing blockchain since it's not needed to store whole chain in memory
 // type Blockchain []Block
@@ -161,40 +164,22 @@ type MaxBlockResponse struct {
 }
 
 func InitializeState() {
-  //check last block
-  //if no blockchain, start a new one
-  //TODO: if no blockchain, get it from the network instead
+
   config := LoadConfig()
 
-  var client = &http.Client{
-  Timeout: time.Second * 10,
-  }
+  max_list := GetMaxBlockFromNetwork()
 
-  var max_list []int64
-  for key, node := range config.Nodes {
-    max_list = append(max_list, 0)
-    time.Sleep(5 * time.Second)
-    r, err := client.Get("http://"+node+":3000/api/v1/maxblock")
-    if err != nil {
-      fmt.Println("no response from node:", node)
-      fmt.Println("error:", err)
-    } else {
-      defer r.Body.Close()
-      fmt.Println(r.Status)
-      var res MaxBlockResponse
-      err = json.NewDecoder(r.Body).Decode(&res)
-      fmt.Println("Key:", key)
-      fmt.Println("MaxBlock:", res.MaxBlock)
-      fmt.Printf("Full Body: %v\n", res)
-      max_list[key] = res.MaxBlock
-      fmt.Println(node, max_list[key])
-    }
-  }
-  
   //genesis block only created by calling function manually
   //always check the network for max block, then start
 
   max := FindMaxBlock()
+
+  //check if different and get blocks from network if behind
+  //TODO: loop through max_list and find highest block?? most common? or just make get max block only keep the highest returned block?
+  if max < max_list[0] {
+    GetBlockChainFromNetwork(max, max_list[0], config.Nodes[0])
+    max = max_list[0]
+  }
 
   b := ReadBlockFromLocalStorage(strconv.Itoa(int(max)))
 
@@ -204,6 +189,45 @@ func InitializeState() {
     fmt.Println("error:", err)
   }
 
+}
+
+func GetMaxBlockFromNetwork() (max_list []int64){
+  
+  config := LoadConfig()
+
+  for key, node := range config.Nodes {
+    max_list = append(max_list, 0)
+    r, err := client.Get("http://"+node+":3000/api/v1/maxblock")
+    if err != nil {
+      fmt.Println("no response from node:", node)
+      fmt.Println("error:", err)
+    } else {
+      defer r.Body.Close()
+      var res MaxBlockResponse
+      err = json.NewDecoder(r.Body).Decode(&res)
+      max_list[key] = res.MaxBlock
+    }
+  }
+
+  return max_list
+}
+
+func GetBlockChainFromNetwork(local_max int64, network_max int64, node string) {
+  for i := local_max+1; i <= network_max; i++ {
+    //TODO get block from network, then write to local storage for each block
+    r, err := client.Get("http://"+node+":3000/api/v1/maxblock")
+    if err != nil {
+      fmt.Println("could not get block from", node)
+      fmt.Println("error:", err)
+    } else {
+      defer r.Body.Close()
+      var b Block
+      err = json.NewDecoder(r.Body).Decode(&b)
+      b.WriteBlockToLocalStorage()
+    }
+    //TODO validate blocks!
+    fmt.Println(i)
+  }
 }
 
 func ReadBlockFromLocalStorage(index string) (b []byte) {
