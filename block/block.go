@@ -170,9 +170,8 @@ func InitializeState() {
   for key, node := range config.Nodes {
     r, err := http.Get("http://"+node+":3000/api/v1/maxblock")
     if err != nil {
-      panic(err)
-    }
-    if r.Body != nil {
+      fmt.Println("no respnse from node:", node)
+    } else {
       body, err := ioutil.ReadAll(r.Body)
       if err != nil {
         fmt.Println("error:", err)
@@ -182,8 +181,6 @@ func InitializeState() {
       _ = json.Unmarshal(body, res)
       max_list[key] = res.MaxBlock
       fmt.Println(node, max_list[key])
-    } else {
-      fmt.Println("No response from node:", node)
     }
   }
   
