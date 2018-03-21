@@ -178,9 +178,9 @@ func InitializeState() {
     if err != nil {
       fmt.Println("no response from node:", node)
       fmt.Println("error:", err)
-      fmt.Println(r.Status)
     } else {
       defer r.Body.Close()
+      fmt.Println(r.Status)
       var res MaxBlockResponse
       err = json.NewDecoder(r.Body).Decode(&res)
       fmt.Println("Key:", key)
