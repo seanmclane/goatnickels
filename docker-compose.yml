@@ -3,18 +3,9 @@ services:
   goat1:
     build: .
     restart: always
-    networks: 
-      goatnet:
   goat2:
     build: .
     restart: always
-    networks: 
-      goatnet:
   goat3:
     build: .
     restart: always
-    networks: 
-      goatnet:
-networks:
-  goatnet:
-    driver: bridge

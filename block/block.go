@@ -178,13 +178,14 @@ func InitializeState() {
     if err != nil {
       fmt.Println("no response from node:", node)
       fmt.Println("error:", err)
+      fmt.Println(res.Status)
     } else {
       defer r.Body.Close()
       var res MaxBlockResponse
       err = json.NewDecoder(r.Body).Decode(&res)
       fmt.Println("Key:", key)
       fmt.Println("MaxBlock:", res.MaxBlock)
-      fmt.Println("Full Body: %v", res)
+      fmt.Printf("Full Body: %v\n", res)
       max_list[key] = res.MaxBlock
       fmt.Println(node, max_list[key])
     }
