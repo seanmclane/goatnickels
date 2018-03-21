@@ -39,13 +39,8 @@ func main() {
     block.CreateGenesisBlock()
   }
 
-  if *serve_flag == "y" {
-    block.InitializeState()
-    block.AsciiGoat()
-    block.DescribeBlock(block.LastGoatBlock)
-    
+  if *serve_flag == "y" {    
     //define server and routes for blockchain node
-    //will remove the block chaining loop above
     r := mux.NewRouter().StrictSlash(true)
     s := r.PathPrefix("/api/v1").Subrouter()
 
@@ -58,8 +53,13 @@ func main() {
     s.HandleFunc("/maxblock", handler.GetMaxBlock).Methods("GET")
     s.HandleFunc("/sign", handler.SignTxion)
 
-    go mine()
     log.Fatal(http.ListenAndServe(":3000", r))
+
+    block.InitializeState()
+    block.AsciiGoat()
+    block.DescribeBlock(block.LastGoatBlock)
+
+    go mine()
   }
   
   if *acct_flag == "y" {
