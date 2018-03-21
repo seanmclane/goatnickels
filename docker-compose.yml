@@ -2,7 +2,19 @@ version: '3'
 services:
   goat1:
     build: .
+    restart: on-failure
+    networks: 
+      goatnet:
   goat2:
     build: .
+    restart: on-failure
+    networks: 
+      goatnet:
   goat3:
     build: .
+    restart: on-failure
+    networks: 
+      goatnet:
+networks:
+  goatnet:
+    driver: bridge

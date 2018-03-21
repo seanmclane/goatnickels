@@ -168,6 +168,7 @@ func InitializeState() {
 
   var max_list []int64
   for key, node := range config.Nodes {
+    max_list[key] = 0
     time.Sleep(5 * time.Second)
     r, err := http.Get("http://"+node+":3000/api/v1/maxblock")
     if err != nil {
@@ -177,9 +178,11 @@ func InitializeState() {
       if err != nil {
         fmt.Println("error:", err)
       }
-      fmt.Println(key, "- body -", r.Body)
       var res MaxBlockResponse
       _ = json.Unmarshal(body, res)
+      fmt.Println("Key:", key)
+      fmt.Println("MaxBlock:", res.MaxBlock)
+      fmt.Println("Full Body:", res)
       max_list[key] = res.MaxBlock
       fmt.Println(node, max_list[key])
     }
