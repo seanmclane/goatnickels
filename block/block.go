@@ -108,7 +108,7 @@ func (b *Block) HashBlock() {
   //create a hash of all values in the block
   //TODO: handle error
   hash_data, _ := json.Marshal(b.Data)
-  block_string := strconv.Itoa(b.Index)+strconv.Itoa(b.Timestamp)+string(hash_data)+hex.EncodeToString(b.LastHash[:])
+  block_string := strconv.Itoa(b.Index)+string(hash_data)+hex.EncodeToString(b.LastHash[:])
   fixed_hash := sha3.Sum512([]byte(block_string))
   b.Hash = fixed_hash[:]
 }
