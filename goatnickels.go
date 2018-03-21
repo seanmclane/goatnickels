@@ -12,6 +12,10 @@ import(
 )
 
 func mine() {
+  block.InitializeState()
+  block.AsciiGoat()
+  block.DescribeBlock(block.LastGoatBlock)
+
   for {
     time.Sleep(30 * time.Second)
     block.NextBlock()
@@ -53,13 +57,9 @@ func main() {
     s.HandleFunc("/maxblock", handler.GetMaxBlock).Methods("GET")
     s.HandleFunc("/sign", handler.SignTxion)
 
-    log.Fatal(http.ListenAndServe(":3000", r))
-
-    block.InitializeState()
-    block.AsciiGoat()
-    block.DescribeBlock(block.LastGoatBlock)
-
     go mine()
+    log.Fatal(http.ListenAndServe(":3000", r))
+      
   }
   
   if *acct_flag == "y" {
