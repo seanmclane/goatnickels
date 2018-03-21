@@ -2,17 +2,17 @@ version: '3'
 services:
   goat1:
     build: .
-    restart: on-failure
+    restart: always
     networks: 
       goatnet:
   goat2:
     build: .
-    restart: on-failure
+    restart: always
     networks: 
       goatnet:
   goat3:
     build: .
-    restart: on-failure
+    restart: always
     networks: 
       goatnet:
 networks:
