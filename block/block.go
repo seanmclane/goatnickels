@@ -547,9 +547,14 @@ func (t *Transaction) AddTransaction() (ok bool) {
   if ok != true {
     return false
   }
-  //check if transaction exists in candidate set
+  //check if transaction exists in candidate set or staging set
   //if so, return and don't broadcast
   for _, c := range CandidateSet {
+    if *t == c {
+      return
+    }
+  }
+  for _, c := range StagingCandidateSet {
     if *t == c {
       return
     }
