@@ -298,6 +298,8 @@ func (v *Vote) AddVote() (ok bool) {
 
 func (v *Vote) VerifyVote() (ok bool) {
   //TODO: verify signature of account sending the vote
+  //TODO: check that the vote is not in the voteset already
+  //TODO: check that there is not another vote from the same account in this round
   return true
 }
 
