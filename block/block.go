@@ -296,6 +296,7 @@ func CheckConsensus() {
       if err != nil {
         fmt.Println("error:", err)
       }
+      fmt.Println(cs)
       node_candidate_sets[key] = HashCandidateSet(&cs)
     }
   }
@@ -309,7 +310,7 @@ func CheckConsensus() {
   for _, ncs := range node_candidate_sets {
     fmt.Println("ncs", ncs)
     fmt.Println("cs", cs_hash)
-    if bytes.Compare(ncs, cs_hash) == 0 {
+    if bytes.Equal(ncs, cs_hash) {
       match += 1
     }
     total += 1
