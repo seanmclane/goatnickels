@@ -297,22 +297,92 @@ func (v *Vote) AddVote() (ok bool) {
 }
 
 func (v *Vote) VerifyVote() (ok bool) {
-  //TODO: verify signature of account sending the vote
   //TODO: check that the vote is not in the voteset already
   //TODO: check that there is not another vote from the same account in this round
-  return true
+
+  //verify signature of account sending the vote
+  //TODO: abstract key recreation into a function (hash, r, s) (ok bool)
+  hash, err := hex.DecodeString(v.Hash)
+    if err != nil {
+      fmt.Println("error:", err)
+    }
+  //check that key is well formed
+  if len(v.Account) < 100 {
+    return false
+  }
+  //remove goat_ from key
+  public_key := v.Account[5:]
+  //recreate ecdsa.PublicKey from pub
+  byte_key, err := hex.DecodeString(public_key)
+  if err != nil {
+    fmt.Println("error:", err)
+  }
+  x, y := elliptic.Unmarshal(elliptic.P384(), byte_key)
+  if x == nil || y == nil {
+    return false
+  }
+  pub := new(ecdsa.PublicKey)
+  pub.Curve = elliptic.P384()
+  pub.X, pub.Y = x, y
+  //convert r and s back to big ints
+  byte_r, err := hex.DecodeString(v.Signature.R)
+  if err != nil {
+    fmt.Println("error:", err)
+  }
+  r := new(big.Int).SetBytes(byte_r)
+  byte_s, err := hex.DecodeString(v.Signature.S)
+  if err != nil {
+    fmt.Println("error:", err)
+  }
+  s := new(big.Int).SetBytes(byte_s)
+  //verify signature
+  sig_ok := ecdsa.Verify(pub, hash, r, s)
+  
+  if sig_ok {
+    return true
+  } else {
+    return false
+  }
+}
+
+func (v *Vote) SignVote(private_key string) (r string, s string) {
+  hash := v.HashVote()
+  //recreate ecdsa.PrivateKey from private_key
+  byte_key, err := hex.DecodeString(private_key)
+  if err != nil {
+    fmt.Println("error:", err)
+  }
+  bigint_key := new(big.Int).SetBytes(byte_key)
+  priv := new(ecdsa.PrivateKey)
+  priv.PublicKey.Curve = elliptic.P384()
+  priv.PublicKey.X, priv.PublicKey.Y = priv.PublicKey.Curve.ScalarBaseMult(byte_key)
+  priv.D = bigint_key
+  r_int, s_int, err := ecdsa.Sign(rand.Reader, priv, hash)
+  if err != nil {
+    fmt.Println("error:", err)
+  }
+  r = hex.EncodeToString(r_int.Bytes())
+  s = hex.EncodeToString(s_int.Bytes())
+  return r, s
+}
+
+func (v *Vote) HashVote() (h []byte) {
+  hash_string := v.Account+v.Hash
+  fixed_hash := sha3.Sum512([]byte(hash_string))
+  h = fixed_hash[:]
+  return h
 }
 
 func SendVoteToNetwork() {
   config := LoadConfig()
 
-  v := Vote{
-    Account: "test", //TODO: add account key to config for each node
+  v := Vote {
+    Account: "goat_04dbb67ae9650ca3258071909f74be5400fe53fc2e5dcc82103020f3aeefeee5f9980c4c05bb8696215458dfa7ddaa1505d2826cab3d246b8930b0694f766a22f8bb63932368c0b12bf80cfaee8a18db1d7ce19df0a84215d20b0bbfbd30d95c25", //TODO: add account key to config for each node
     Hash: hex.EncodeToString(HashCandidateSet(&CandidateSet)),
     Signature: Signature {
-      R: "test",
-      S: "test",
-      }, //TODO: actually create a signature
+      R: "9b723e12925e535e763529f4f538e03aa90b82f198d588f8b024117d79580c9d98a63575b9e1b0142c62b66777a15e62",
+      S: "d3d9064dfebd640ab03c471625d62c5cec53b6d98eea874efbed522dd317038ee35e25105749cf124b3a759c636dc807",
+      }, //TODO: actually create a signature, which requires the private key be kept on the server
   }
 
   for _, node := range config.Nodes {
@@ -378,6 +448,7 @@ func HashCandidateSet(cs *[]Transaction) (h []byte){
   }
   fixed_hash := sha3.Sum512([]byte(sum))
   h = fixed_hash[:]
+ 
   return h
 }
 

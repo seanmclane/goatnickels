@@ -9,6 +9,7 @@ import(
   "github.com/seanmclane/goatnickels/handler"
   "github.com/gorilla/mux"
   "log"
+  //"encoding/hex"
 )
 
 func mine() {
@@ -97,9 +98,13 @@ func main() {
   }
 
   if *test_flag == "y" {
-    config := block.LoadConfig()
-    for i := 0; i < 3; i++ {
-      fmt.Println(config.Nodes[i])
+    v := block.Vote{
+    Account: "goat_04dbb67ae9650ca3258071909f74be5400fe53fc2e5dcc82103020f3aeefeee5f9980c4c05bb8696215458dfa7ddaa1505d2826cab3d246b8930b0694f766a22f8bb63932368c0b12bf80cfaee8a18db1d7ce19df0a84215d20b0bbfbd30d95c25", //TODO: add account key to config for each node
+    Hash: "20bea146cc483a81a482b5b93228d7856cb1656161d7409ab0ac87b35ed3cc91f8a67c1c0d5c89a9c832395ff260ea07c2388f6b8503bbd123047b4dd35eeaff",
+    //Hash: hex.EncodeToString(block.HashCandidateSet(&block.CandidateSet)),
     }
+    r, s := v.SignVote(*private_key_flag)
+    fmt.Println("r:",r)
+    fmt.Println("s:",s)
   }
 }
