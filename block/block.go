@@ -206,6 +206,9 @@ func GetMaxBlockFromNetwork() (max_list []int64){
       defer r.Body.Close()
       var res MaxBlockResponse
       err = json.NewDecoder(r.Body).Decode(&res)
+      if err != nil {
+        fmt.Println("error:", err)
+      }
       max_list[key] = res.MaxBlock
     }
   }
@@ -224,6 +227,9 @@ func GetBlockChainFromNetwork(local_max int64, network_max int64, node string) {
       defer r.Body.Close()
       var b Block
       err = json.NewDecoder(r.Body).Decode(&b)
+      if err != nil {
+        fmt.Println("error:", err)
+      }
       b.WriteBlockToLocalStorage()
     }
     //TODO validate blocks!
@@ -269,6 +275,62 @@ func MakeNextBlockData() (data Data){
   data.ApplyTransactions()
   
   return data
+}
+
+func CheckConsensus() {
+  //criteria for consensus = 2/3 of stakes sign hash of candidate set transaction
+  //for now, just get candidate set from other nodes and compare to own
+  config := LoadConfig()
+
+  var node_candidate_sets [][]byte
+
+  for key, node := range config.Nodes {
+    node_candidate_sets = append(node_candidate_sets, []byte(""))
+    r, err := client.Get("http://"+node+":3000/api/v1/txions")
+    if err != nil {
+      fmt.Println("error:", err)
+    } else {
+      defer r.Body.Close()
+      var cs []Transaction
+      err = json.NewDecoder(r.Body).Decode(&cs)
+      if err != nil {
+        fmt.Println("error:", err)
+      }
+      node_candidate_sets[key] = HashCandidateSet(&cs)
+    }
+  }
+
+  cs_hash := HashCandidateSet(&CandidateSet)
+
+  var match int
+  var total int
+  //compare hashed candidate sets to local
+  //TODO: get proportions for all
+  for _, ncs := range node_candidate_sets {
+    fmt.Println("ncs", ncs)
+    fmt.Println("cs", cs_hash)
+    if bytes.Compare(ncs, cs_hash) == 0 {
+      match += 1
+    }
+    total += 1
+  }
+
+  if match / total > 2/3 {
+    NextBlock()
+  } else {
+    //TODO: tell network to restart consensus round
+  }
+}
+
+func HashCandidateSet(cs *[]Transaction) (h []byte){
+  var sum string
+  for _, txion := range *cs {
+    sum += hex.EncodeToString(txion.HashTransaction())
+  }
+  fmt.Println(sum)
+  fixed_hash := sha3.Sum512([]byte(sum))
+  h = fixed_hash[:]
+  return h
 }
 
 func NextBlock() {

@@ -17,8 +17,8 @@ func mine() {
   block.DescribeBlock(block.LastGoatBlock)
 
   for {
-    time.Sleep(30 * time.Second)
-    block.NextBlock()
+    time.Sleep(20 * time.Second)
+    block.CheckConsensus()
   }
 }
 
