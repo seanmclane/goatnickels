@@ -339,6 +339,7 @@ func (v *Vote) VerifyVote() (ok bool) {
   sig_ok := ecdsa.Verify(pub, hash, r, s)
   
   if sig_ok {
+    fmt.Println("vote verified")
     return true
   } else {
     return false
@@ -378,7 +379,7 @@ func SendVoteToNetwork() {
 
   v := Vote {
     Account: "goat_04dbb67ae9650ca3258071909f74be5400fe53fc2e5dcc82103020f3aeefeee5f9980c4c05bb8696215458dfa7ddaa1505d2826cab3d246b8930b0694f766a22f8bb63932368c0b12bf80cfaee8a18db1d7ce19df0a84215d20b0bbfbd30d95c25", //TODO: add account key to config for each node
-    Hash: hex.EncodeToString(HashCandidateSet(&CandidateSet)),
+    Hash: "20bea146cc483a81a482b5b93228d7856cb1656161d7409ab0ac87b35ed3cc91f8a67c1c0d5c89a9c832395ff260ea07c2388f6b8503bbd123047b4dd35eeaff",
     Signature: Signature {
       R: "9b723e12925e535e763529f4f538e03aa90b82f198d588f8b024117d79580c9d98a63575b9e1b0142c62b66777a15e62",
       S: "d3d9064dfebd640ab03c471625d62c5cec53b6d98eea874efbed522dd317038ee35e25105749cf124b3a759c636dc807",
