@@ -14,6 +14,7 @@ import(
   "math/big"
   "encoding/hex"
   "net/http"
+  "bytes"
 )
 
 //define config structure
@@ -313,6 +314,7 @@ func (t *Transaction) AddTransaction() (ok bool) {
   if ok != true {
     return false
   }
+  t.Broadcast()
   CandidateSet = append(CandidateSet, *t)
   return ok
 }
@@ -486,5 +488,35 @@ func (t *Transaction) VerifySequence() (ok bool) {
     return true
   } else {
     return false
+  }
+}
+
+func (t *Transaction) Broadcast() {
+  //check if transaction exists in candidate set
+  //if so, return and don't broadcast
+  for _, c := range CandidateSet {
+    if *t == c {
+      return
+    }
+  }
+
+  config := LoadConfig()
+
+  for _, node := range config.Nodes {
+    json, err := json.Marshal(t)
+    if err != nil {
+      fmt.Println("error:", err)
+    }
+    req, err := http.NewRequest("POST", "http://"+node+":3000/api/v1/txion", bytes.NewBuffer(json))
+    if err != nil {
+      fmt.Println("error:", err)
+    }
+    req.Header.Set("Content-Type", "application/json")
+    r, err := client.Do(req)
+    if err != nil {
+      fmt.Println("error:", err)
+    } else {
+      fmt.Println("Status:", r.Status)
+    }
   }
 }
