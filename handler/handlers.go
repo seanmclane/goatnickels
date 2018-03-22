@@ -119,7 +119,27 @@ func GetMaxBlock(w http.ResponseWriter, r *http.Request) {
   w.Write(bytes)
 }
 
+func Vote(w http.ResponseWriter, r *http.Request) {
+  //TODO: fix these ReadAlls to use json.NewDecoder instead
+  body, err := ioutil.ReadAll(r.Body)
+  if err != nil {
+    http.Error(w, err.Error(), http.StatusInternalServerError)
+  }
 
+  var vote block.Vote
+  err = json.Unmarshal(body, &vote)
+  if err != nil {
+    http.Error(w, err.Error(), http.StatusInternalServerError)
+  }
+
+  ok := vote.AddVote()
+
+  response := []byte(`{"success":`+strconv.FormatBool(ok)+"}")
+
+  w.Header().Set("Content-Type", "application/json; charset=UTF-8")
+  w.WriteHeader(http.StatusCreated)
+  w.Write(response)
+}
 
 
 

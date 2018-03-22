@@ -51,6 +51,9 @@ var Accounts map[string]Account
 //create candidate set of transactions
 var CandidateSet []Transaction
 
+//create vote set to store votes from network
+var VoteSet []Vote
+
 // create http client for all network requests
 var client = &http.Client{
   Timeout: time.Second * 10,
@@ -98,6 +101,12 @@ type Transaction struct {
 type Signature struct {
   R string `json:"r"`
   S string `json:"s"`
+}
+
+type Vote struct {
+  Account string `json:"account"`
+  Hash string `json:"hash"`
+  Signature Signature `json:"signature"`
 }
 
 func AsciiGoat() {
@@ -277,41 +286,79 @@ func MakeNextBlockData() (data Data){
   return data
 }
 
-func CheckConsensus() {
-  //criteria for consensus = 2/3 of stakes sign hash of candidate set transaction
-  //for now, just pull candidate set from other nodes and compare to own
+func (v *Vote) AddVote() (ok bool) {
+  ok = v.VerifyVote()
+  if ok != true {
+    return false
+  }
+  VoteSet = append(VoteSet, *v)
+  fmt.Println(VoteSet)
+  return ok
+}
+
+func (v *Vote) VerifyVote() (ok bool) {
+  //TODO: verify signature of account sending the vote
+  return true
+}
+
+func SendVoteToNetwork() {
   config := LoadConfig()
 
-  var node_candidate_sets [][]byte
+  v := Vote{
+    Account: "test", //TODO: add account key to config for each node
+    Hash: hex.EncodeToString(HashCandidateSet(&CandidateSet)),
+    Signature: Signature {
+      R: "test",
+      S: "test",
+      }, //TODO: actually create a signature
+  }
 
-  for key, node := range config.Nodes {
-    node_candidate_sets = append(node_candidate_sets, []byte(""))
-    r, err := client.Get("http://"+node+":3000/api/v1/txion")
+  for _, node := range config.Nodes {
+    json, err := json.Marshal(v)
+    if err != nil {
+      fmt.Println("error:", err)
+    }
+    req, err := http.NewRequest("POST", "http://"+node+":3000/api/v1/vote", bytes.NewBuffer(json))
+    if err != nil {
+      fmt.Println("error:", err)
+    }
+    req.Header.Set("Content-Type", "application/json")
+    r, err := client.Do(req)
     if err != nil {
       fmt.Println("error:", err)
     } else {
-      defer r.Body.Close()
-      var cs []Transaction
-      err = json.NewDecoder(r.Body).Decode(&cs)
-      if err != nil {
-        fmt.Println("error:", err)
-      }
-      fmt.Println(cs)
-      node_candidate_sets[key] = HashCandidateSet(&cs)
+      fmt.Println("Status:", r.Status)
     }
   }
+}
+
+func CheckConsensus() {
+  //TODO: final criteria for consensus = 2/3 of stakes sign hash of candidate set transaction
 
   cs_hash := HashCandidateSet(&CandidateSet)
 
   var match int
   var total int
-  //compare hashed candidate sets from each node to local
+
   //TODO: get proportions for all, this won't work if this node is the one out of sync
-  for _, ncs_hash := range node_candidate_sets {
-    if bytes.Equal(ncs_hash, cs_hash) {
+  //changed the consensus to check votes in voteset
+  //if agreed-upon hash is same as local hash, apply transactions
+  //TODO: if not, wait and request new block
+
+  for _, v := range VoteSet {
+    v_hash, err := hex.DecodeString(v.Hash)
+    if err != nil {
+      fmt.Println("error:", err)
+    }
+    if bytes.Equal(v_hash, cs_hash) {
       match += 1
     }
     total += 1
+  }
+
+  if total < 1 {
+    fmt.Println("No consensus reached")
+    return
   }
 
   if match / total >= 2/3 {

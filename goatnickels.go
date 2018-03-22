@@ -17,8 +17,16 @@ func mine() {
   block.DescribeBlock(block.LastGoatBlock)
 
   for {
-    time.Sleep(20 * time.Second)
-    block.CheckConsensus()
+    if time.Now().Second() == 20 || time.Now().Second() == 50 {
+      fmt.Println("Broadcast candidate set vote to nodes")
+      block.SendVoteToNetwork()
+      fmt.Println("Tally percent of vote/stake for each transaction")
+      fmt.Println("Move any not reaching 80 percent to the staging set")
+    }
+    if time.Now().Second() == 30 || time.Now().Second() == 0 {
+      block.CheckConsensus()
+    }
+    time.Sleep(1 * time.Second)
   }
 }
 
@@ -54,7 +62,8 @@ func main() {
     s.HandleFunc("/acct/{key}", handler.GetAcct).Methods("GET")
     s.HandleFunc("/block/{index}", handler.GetBlock).Methods("GET")
     s.HandleFunc("/maxblock", handler.GetMaxBlock).Methods("GET")
-    s.HandleFunc("/sign", handler.SignTxion)
+    s.HandleFunc("/sign", handler.SignTxion).Methods("POST")
+    s.HandleFunc("/vote", handler.Vote).Methods("POST")
 
     srv := &http.Server{
       Addr: ":3000",
