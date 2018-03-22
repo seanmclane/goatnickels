@@ -291,6 +291,8 @@ func CheckConsensus() {
       fmt.Println("error:", err)
     } else {
       defer r.Body.Close()
+      test, _ := json.Unmarshal(r.Body)
+      fmt.Println(test)
       var cs []Transaction
       err = json.NewDecoder(r.Body).Decode(&cs)
       if err != nil {
