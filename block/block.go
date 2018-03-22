@@ -313,12 +313,18 @@ func (v *Vote) AddVote() (ok bool) {
   if ok != true {
     return false
   }
+  //check that the vote is not in the voteset already
+  for _, vote := range VoteSet {
+    if *v == vote {
+      return false
+    }
+  }
   VoteSet = append(VoteSet, *v)
   return ok
 }
 
 func (v *Vote) VerifyVote() (ok bool) {
-  //TODO: check that the vote is not in the voteset already
+
   //TODO: check that there is not another vote from the same account in this round
 
   //verify signature of account sending the vote
