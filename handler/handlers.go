@@ -40,7 +40,11 @@ func AddTxion(w http.ResponseWriter, r *http.Request) {
   response := []byte(`{"success":`+strconv.FormatBool(ok)+"}")
 
   w.Header().Set("Content-Type", "application/json; charset=UTF-8")
-  w.WriteHeader(http.StatusCreated)
+  if ok {
+    w.WriteHeader(http.StatusCreated)
+  } else {
+    w.WriteHeader(http.StatusBadRequest)
+  }
   w.Write(response)
 
 }
@@ -137,7 +141,11 @@ func Vote(w http.ResponseWriter, r *http.Request) {
   response := []byte(`{"success":`+strconv.FormatBool(ok)+"}")
 
   w.Header().Set("Content-Type", "application/json; charset=UTF-8")
-  w.WriteHeader(http.StatusCreated)
+  if ok {
+    w.WriteHeader(http.StatusCreated)
+  } else {
+    w.WriteHeader(http.StatusBadRequest)
+  }
   w.Write(response)
 }
 
