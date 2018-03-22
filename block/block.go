@@ -279,7 +279,7 @@ func MakeNextBlockData() (data Data){
 
 func CheckConsensus() {
   //criteria for consensus = 2/3 of stakes sign hash of candidate set transaction
-  //for now, just get candidate set from other nodes and compare to own
+  //for now, just pull candidate set from other nodes and compare to own
   config := LoadConfig()
 
   var node_candidate_sets [][]byte
@@ -305,21 +305,20 @@ func CheckConsensus() {
 
   var match int
   var total int
-  //compare hashed candidate sets to local
-  //TODO: get proportions for all
-  for _, ncs := range node_candidate_sets {
-    fmt.Println("ncs", ncs)
-    fmt.Println("cs", cs_hash)
-    if bytes.Equal(ncs, cs_hash) {
+  //compare hashed candidate sets from each node to local
+  //TODO: get proportions for all, this won't work if this node is the one out of sync
+  for _, ncs_hash := range node_candidate_sets {
+    if bytes.Equal(ncs_hash, cs_hash) {
       match += 1
     }
     total += 1
   }
 
-  if match / total > 2/3 {
+  if match / total >= 2/3 {
     NextBlock()
   } else {
     //TODO: tell network to restart consensus round
+    fmt.Println("No consensus reached")
   }
 }
 
