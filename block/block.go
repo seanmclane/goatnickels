@@ -314,7 +314,6 @@ func (v *Vote) AddVote() (ok bool) {
     return false
   }
   VoteSet = append(VoteSet, *v)
-  fmt.Println(VoteSet)
   return ok
 }
 
@@ -473,10 +472,7 @@ func HashCandidateSet(cs *[]Transaction) (h []byte){
     sum += hex.EncodeToString(txion.HashTransaction())
   }
   fixed_hash := sha3.Sum512([]byte(sum))
-  h = fixed_hash[:]
-
-  fmt.Println(hex.EncodeToString(h))
- 
+  h = fixed_hash[:] 
   return h
 }
 
@@ -572,6 +568,7 @@ func (b *Block) WriteBlockToLocalStorage() {
   out, err := json.Marshal(b)
   if err != nil {
     fmt.Println("error:", err)
+    return
   }
 
   //write json to file at config directory
@@ -579,9 +576,9 @@ func (b *Block) WriteBlockToLocalStorage() {
   err = ioutil.WriteFile(string(config.Directory)+strconv.Itoa(b.Index), out, 0644)
   if err != nil {
       panic(err)
+  } else {
+    fmt.Println("Block "+strconv.Itoa(b.Index)+" written successfully!")
   }
-
-  fmt.Println("Block "+strconv.Itoa(b.Index)+" written successfully!")
 
 }
 

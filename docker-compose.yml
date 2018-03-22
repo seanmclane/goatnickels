@@ -1,13 +1,28 @@
 version: '3'
 services:
   goat1:
-    build: .
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+      - CONFIG={"directory":"/goatchain/","nodes":["goat1","goat2","goat3"],"account":"goat_04dbb67ae9650ca3258071909f74be5400fe53fc2e5dcc82103020f3aeefeee5f9980c4c05bb8696215458dfa7ddaa1505d2826cab3d246b8930b0694f766a22f8bb63932368c0b12bf80cfaee8a18db1d7ce19df0a84215d20b0bbfbd30d95c25"}
+      - KEYSTORE={"private_key":"131952e67d981417fe5acf0eaca5d576e701fe1f523c647bbb3c387d8234cd94c55f3f457de0dff2d19adb66b654fbc7","public_key":"04dbb67ae9650ca3258071909f74be5400fe53fc2e5dcc82103020f3aeefeee5f9980c4c05bb8696215458dfa7ddaa1505d2826cab3d246b8930b0694f766a22f8bb63932368c0b12bf80cfaee8a18db1d7ce19df0a84215d20b0bbfbd30d95c25"}
     restart: always
     ports:
       - 3000:3000
   goat2:
-    build: .
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+      - CONFIG={"directory":"/goatchain/","nodes":["goat1","goat2","goat3"],"account":"goat_04dbb67ae9650ca3258071909f74be5400fe53fc2e5dcc82103020f3aeefeee5f9980c4c05bb8696215458dfa7ddaa1505d2826cab3d246b8930b0694f766a22f8bb63932368c0b12bf80cfaee8a18db1d7ce19df0a84215d20b0bbfbd30d95c25"}
+      - KEYSTORE={"private_key":"163ea683182f0dd82eeeb92f8735f280ca9f4fe5a7136c2e18d4c4d1580f09f6ff60be40d74660a95cba0387152fa9ca","public_key":"04ab1594a3b65e440653b1a54952aee3cb7f5c41cb476f7ecd3ce58dc23cef0923beb45fc275ff4149cd9f0417f8ca885e882b3b68d00bab2988b22f2eaf7f6683ba3e672abd668e5788a8ecb4d055cd024f004ff03db06158f18e5bd02914685a"}
     restart: always
   goat3:
-    build: .
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+      - CONFIG={"directory":"/goatchain/","nodes":["goat1","goat2","goat3"],"account":"goat_04dbb67ae9650ca3258071909f74be5400fe53fc2e5dcc82103020f3aeefeee5f9980c4c05bb8696215458dfa7ddaa1505d2826cab3d246b8930b0694f766a22f8bb63932368c0b12bf80cfaee8a18db1d7ce19df0a84215d20b0bbfbd30d95c25"}
+      - KEYSTORE={"private_key":"98f60947513384b134f52eec73f62f5fe18bc9bf4c7e044a2784edce8a9a4df1b7c659cf263b66845a332c13c5c3107b","public_key":"045b4dfabe49048ef6fb6e47fc4e2b33dd54e46b3ed4ab008f8dce7457f588f7a6975690328db4bd48eb874ff909c579fe37ae4f39e9b9b10ac1f2f49083c7d2d8fe91ff5314b2742d58e894681d55682876417f33f851e8091f9c00045a7a9ebc"}
     restart: always
