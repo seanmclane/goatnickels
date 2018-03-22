@@ -49,7 +49,6 @@ func main() {
     s := r.PathPrefix("/api/v1").Subrouter()
 
     s.HandleFunc("/", handler.Index)
-    //TODO: specify type of http request to handle
     s.HandleFunc("/txion", handler.AddTxion).Methods("POST")
     s.HandleFunc("/txion", handler.GetTxions).Methods("GET")
     s.HandleFunc("/acct/{key}", handler.GetAcct).Methods("GET")
@@ -58,12 +57,14 @@ func main() {
     s.HandleFunc("/sign", handler.SignTxion)
 
     srv := &http.Server{
+      Addr: ":3000",
+      Handler: r,
       ReadTimeout: 5 * time.Second,
       WriteTimeout: 10 * time.Second,
     }
 
     go mine()
-    log.Fatal(srv.ListenAndServe(":3000", r))
+    log.Fatal(srv.ListenAndServe())
 
   }
   
