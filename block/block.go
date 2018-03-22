@@ -73,8 +73,14 @@ var Accounts map[string]Account
 //create candidate set of transactions
 var CandidateSet []Transaction
 
+//create a staging set of transactions during voting
+var StagingCandidateSet []Transaction
+
 //create vote set to store votes from network
 var VoteSet []Vote
+
+//create bool to capture whether voting
+var Voting bool
 
 // create http client for all network requests
 var client = &http.Client{
@@ -198,6 +204,9 @@ type MaxBlockResponse struct {
 func InitializeState() {
 
   config := LoadConfig()
+
+  //initialize voting to whether a voting round on the candidate set is happening
+  Voting = false
 
   max_list := GetMaxBlockFromNetwork()
 
@@ -487,6 +496,14 @@ func HashCandidateSet(cs *[]Transaction) (h []byte){
   return h
 }
 
+func ResetCandidateSet() {
+  CandidateSet = []Transaction{}
+  for _, t := range StagingCandidateSet {
+    CandidateSet = append(CandidateSet, t)
+  }
+  StagingCandidateSet = []Transaction{}
+}
+
 func NextBlock() {
 
   next_block := Block {
@@ -537,7 +554,14 @@ func (t *Transaction) AddTransaction() (ok bool) {
       return
     }
   }
-  CandidateSet = append(CandidateSet, *t)
+  //add to candidate set if not currently voting on transactions
+  //otherwise add to staging set
+  if Voting {
+    StagingCandidateSet = append(StagingCandidateSet, *t)
+  } else {
+    CandidateSet = append(CandidateSet, *t)
+  }
+  
   t.Broadcast()
   return ok
 }
