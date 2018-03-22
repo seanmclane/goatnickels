@@ -236,6 +236,8 @@ func GetMaxBlockFromNetwork() (max_list []int64){
   
   config := LoadConfig()
 
+  //TODO: remove self node from list of nodes
+
   for key, node := range config.Nodes {
     max_list = append(max_list, 0)
     r, err := client.Get("http://"+node+":3000/api/v1/maxblock")
@@ -430,6 +432,8 @@ func SendVoteToNetwork() {
     S: s,
   }
 
+  //TODO: remove self node from list of nodes
+
   for _, node := range config.Nodes {
     json, err := json.Marshal(v)
     if err != nil {
@@ -551,12 +555,12 @@ func (t *Transaction) AddTransaction() (ok bool) {
   //if so, return and don't broadcast
   for _, c := range CandidateSet {
     if *t == c {
-      return
+      return false
     }
   }
   for _, c := range StagingCandidateSet {
     if *t == c {
-      return
+      return false
     }
   }
   //add to candidate set if not currently voting on transactions
@@ -747,6 +751,8 @@ func (t *Transaction) VerifySequence() (ok bool) {
 func (t *Transaction) Broadcast() {
 
   config := LoadConfig()
+
+  //TODO: remove self node from list of nodes
 
   for _, node := range config.Nodes {
     json, err := json.Marshal(t)
