@@ -314,8 +314,15 @@ func (t *Transaction) AddTransaction() (ok bool) {
   if ok != true {
     return false
   }
-  t.Broadcast()
+  //check if transaction exists in candidate set
+  //if so, return and don't broadcast
+  for _, c := range CandidateSet {
+    if *t == c {
+      return
+    }
+  }
   CandidateSet = append(CandidateSet, *t)
+  t.Broadcast()
   return ok
 }
 
@@ -492,13 +499,6 @@ func (t *Transaction) VerifySequence() (ok bool) {
 }
 
 func (t *Transaction) Broadcast() {
-  //check if transaction exists in candidate set
-  //if so, return and don't broadcast
-  for _, c := range CandidateSet {
-    if *t == c {
-      return
-    }
-  }
 
   config := LoadConfig()
 
