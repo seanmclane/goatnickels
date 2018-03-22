@@ -302,10 +302,7 @@ func (v *Vote) VerifyVote() (ok bool) {
 
   //verify signature of account sending the vote
   //TODO: abstract key recreation into a function (hash, r, s) (ok bool)
-  hash, err := hex.DecodeString(v.Hash)
-    if err != nil {
-      fmt.Println("error:", err)
-    }
+  hash := v.HashVote()
   //check that key is well formed
   if len(v.Account) < 100 {
     return false
