@@ -327,7 +327,6 @@ func HashCandidateSet(cs *[]Transaction) (h []byte){
   for _, txion := range *cs {
     sum += hex.EncodeToString(txion.HashTransaction())
   }
-  fmt.Println(sum)
   fixed_hash := sha3.Sum512([]byte(sum))
   h = fixed_hash[:]
   return h
