@@ -285,7 +285,7 @@ func CheckConsensus() {
   var node_candidate_sets [][]byte
 
   for key, node := range config.Nodes {
-    node_candidate_sets = append(node_candidate_sets, []byte(0))
+    node_candidate_sets = append(node_candidate_sets, []byte(""))
     r, err := client.Get("http://"+node+":3000/api/v1/txion")
     if err != nil {
       fmt.Println("error:", err)
