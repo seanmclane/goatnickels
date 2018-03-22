@@ -57,9 +57,14 @@ func main() {
     s.HandleFunc("/maxblock", handler.GetMaxBlock).Methods("GET")
     s.HandleFunc("/sign", handler.SignTxion)
 
+    srv := &http.Server{
+      ReadTimeout: 5 * time.Second,
+      WriteTimeout: 10 * time.Second,
+    }
+
     go mine()
-    log.Fatal(http.ListenAndServe(":3000", r))
-      
+    log.Fatal(srv.ListenAndServe(":3000", r))
+
   }
   
   if *acct_flag == "y" {

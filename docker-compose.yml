@@ -3,6 +3,8 @@ services:
   goat1:
     build: .
     restart: always
+    ports:
+      - 3000:3000
   goat2:
     build: .
     restart: always
