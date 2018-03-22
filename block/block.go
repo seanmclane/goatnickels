@@ -371,6 +371,8 @@ func (v *Vote) HashVote() (h []byte) {
   hash_string := v.Account+v.Hash
   fixed_hash := sha3.Sum512([]byte(hash_string))
   h = fixed_hash[:]
+
+  fmt.Println(hex.EncodeToString(h))
   return h
 }
 
