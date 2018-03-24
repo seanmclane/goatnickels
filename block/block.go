@@ -477,6 +477,8 @@ func CheckConsensus() {
     total += 1
   }
 
+  fmt.Println("Total votes:", total)
+
   if total < 1 {
     fmt.Println("No consensus reached due to lack of votes")
     return
