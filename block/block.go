@@ -541,6 +541,10 @@ func CheckConsensus() {
 		}
 
 		if bytes.Equal(vHash, csHash) {
+			//reward voters on winning hash (add transactions to candidate set)
+			RewardVoters(winningHash)
+			//build next block
+			//TODO: consider whether something needs to be refactored out to make this simpler
 			NextBlock()
 		} else {
 			time.Sleep(3 * time.Second)
@@ -562,6 +566,18 @@ func CheckConsensus() {
 
 func ResetVoteSet() {
 	VoteSet = []Vote{}
+}
+
+func RewardVoters(hash string) {
+	for _, v := range VoteSet {
+		if v.Hash == hash {
+			CandidateSet = append(CandidateSet, Transaction{
+				From:   "mine",
+				To:     v.Account,
+				Amount: 100000000, //TODO: scale reward to stake
+			})
+		}
+	}
 }
 
 func HashCandidateSet(cs *[]Transaction) (h []byte) {
@@ -711,6 +727,14 @@ func (d *Data) ApplyTransactions() {
 
 	//add and subtract from accounts
 	for _, txion := range CandidateSet {
+		if txion.From == "mine" {
+			tnb := d.State[txion.To].Balance + txion.Amount
+			d.State[txion.To] = Account{
+				Balance:  tnb,
+				Sequence: d.State[txion.To].Sequence,
+			}
+			continue
+		}
 		//check if sequence is incremented by one
 		ok := txion.VerifySequence()
 		if ok == true {
@@ -733,8 +757,8 @@ func (d *Data) ApplyTransactions() {
 
 		}
 	}
-	//reset candidate transactions to apply
-	CandidateSet = nil
+
+	//reset candidate transactions in goatnickels.go
 
 }
 
