@@ -514,7 +514,15 @@ func CheckConsensus() {
   fmt.Println("Total votes:", total)
 
   if total < 1 {
-    fmt.Println("No consensus reached due to lack of votes")
+    //catch up to network
+    time.Sleep(3 * time.Second)
+    max_block, nodes := GetMaxBlockNumberFromNetwork()
+    if FindMaxBlock() < max_block {
+      GetBlockFromNetwork(max_block, nodes[0])
+      //TODO: loop through to get real max block
+    } else {
+      fmt.Println("No consensus reached due to lack of votes")
+    }
     return
   }
 
