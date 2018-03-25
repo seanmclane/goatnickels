@@ -19,10 +19,9 @@ func mine() {
 
   for {
     if time.Now().Second() == 20 || time.Now().Second() == 50 {
-      fmt.Println("Tally percent of vote/stake for each transaction")
-      fmt.Println("Move any transactions not reaching 80 percent to the staging set")
+      //TODO: Move any transactions not reaching 80 percent to the staging set
       block.Voting = true
-      fmt.Println("Broadcast candidate set vote to nodes")
+      fmt.Println("---------- Start voting round ---------")
       block.SendVoteToNetwork()
     }
     if time.Now().Second() == 30 || time.Now().Second() == 0 {
@@ -33,6 +32,7 @@ func mine() {
       //TODO: ensure transactions that were not in the applied candidate set stay in the new candidate set with all the staging transactions
       block.ResetCandidateSet()
       block.ResetVoteSet()
+      fmt.Println("---------- End voting round ---------")
     }
     time.Sleep(1 * time.Second)
   }
