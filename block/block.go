@@ -519,7 +519,12 @@ func CheckConsensus() {
     max_block, nodes := GetMaxBlockNumberFromNetwork()
     if FindMaxBlock() < max_block {
       GetBlockFromNetwork(max_block, nodes[0])
-      LastGoatBlock = ReadBlockFromLocalStorage(strconv.Itoa(max_block))
+      b := ReadBlockFromLocalStorage(strconv.Itoa(max_block))
+      //make bytestring to Block
+      err := json.Unmarshal(b, &LastGoatBlock)
+      if err != nil {
+        fmt.Println("error:", err)
+      }
       //TODO: loop through to get real max block
     } else {
       fmt.Println("No consensus reached due to lack of votes")
@@ -540,7 +545,12 @@ func CheckConsensus() {
       time.Sleep(3 * time.Second)
       max_block, nodes := GetMaxBlockNumberFromNetwork()
       GetBlockFromNetwork(max_block, nodes[0])
-      LastGoatBlock = ReadBlockFromLocalStorage(strconv.Itoa(max_block))
+      b := ReadBlockFromLocalStorage(strconv.Itoa(max_block))
+      //make bytestring to Block
+      err := json.Unmarshal(b, &LastGoatBlock)
+      if err != nil {
+        fmt.Println("error:", err)
+      }
       //TODO: loop through to get real max block
     }
   } else {
