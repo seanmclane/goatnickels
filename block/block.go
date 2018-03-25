@@ -723,7 +723,11 @@ func SortTransactions() {
 
 func (d *Data) ApplyTransactions() {
 
+	fmt.Println(CandidateSet)
+
 	SortTransactions()
+
+	fmt.Println(CandidateSet)
 
 	//add and subtract from accounts
 	for _, txion := range CandidateSet {
