@@ -231,13 +231,15 @@ func InitializeState() {
 
 }
 
-func GetMaxBlockNumberFromNetwork() (max_block int, nodes []string){
+func GetMaxBlockNumberFromNetwork() (max_block_id int, nodes []string){
   
   config := LoadConfig()
 
   //TODO: remove self node from list of nodes
 
+  //list of nodes with the maximum block id as value
   max_list := make(map[string]int)
+  //list of maximum block ids with the count as value
   max_count := make(map[int]int)
 
   for _, node := range config.Nodes {
@@ -256,27 +258,30 @@ func GetMaxBlockNumberFromNetwork() (max_block int, nodes []string){
     }
   }
 
-  for _, max := range max_list {
-    max_count[max] += 1
+  //count occurences of max block id across nodes
+  for _, max_block_id := range max_list {
+    max_count[max_block_id] += 1
   }
 
   //TODO: use large % of network agreement to determine true max block
-  max_block = 0
-  max_number := 0
-  for max_num, count := range max_count {
-    if count > max_block {
-      max_block = count
-      max_number = max_num
+  //get the max block id with the highest count
+  max_block_count := 0
+  max_block_id = 0
+  for block_id, count := range max_count {
+    if count > max_block_count {
+      max_block_count = count
+      max_block_id = block_id
     }
   }
 
-  for node, max_num := range max_list {
-    if max_num == max_number {
+  //get the nodes that have that block
+  for node, block_id := range max_list {
+    if block_id == max_block_id {
       nodes = append(nodes, node)
     }
   }
 
-  fmt.Println("max block:", max_block)
+  fmt.Println("max block:", max_block_id)
 
   return max_block, nodes
 }
@@ -325,13 +330,11 @@ func FindMaxBlock() (max int) {
       fmt.Println("error:", err)
     }
     current := int(cur)
-    fmt.Println("current", current, "cur", cur)
     if current > max {
       max = current
     }
   }
 
-  fmt.Println("max:", max)
   return max
 }
 
