@@ -492,6 +492,10 @@ func CheckConsensus() {
   }
 }
 
+func ResetVoteSet() {
+  VoteSet = []Vote{}
+}
+
 func HashCandidateSet(cs *[]Transaction) (h []byte){
   var sum string
   for _, txion := range *cs {

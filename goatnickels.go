@@ -32,6 +32,7 @@ func mine() {
       //for now I will overwrite the candidate set with the staging set
       //TODO: ensure transactions that were not in the applied candidate set stay in the new candidate set with all the staging transactions
       block.ResetCandidateSet()
+      block.ResetVoteSet()
     }
     time.Sleep(1 * time.Second)
   }
