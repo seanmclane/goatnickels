@@ -286,8 +286,6 @@ func GetMaxBlockNumberFromNetwork() (maxBlockId int, nodes []string) {
 		}
 	}
 
-	fmt.Println("max block:", maxBlockId)
-
 	return maxBlockId, nodes
 }
 
@@ -701,7 +699,7 @@ func (b *Block) WriteBlockToLocalStorage() {
 
 }
 
-func GenerateAccount() {
+func GenerateAccount() (k KeyStore) {
 	//create the keypair
 	priv, err := ecdsa.GenerateKey(elliptic.P384(), rand.Reader)
 	if err != nil {
@@ -712,17 +710,12 @@ func GenerateAccount() {
 	pub := priv.PublicKey
 	pubkey := elliptic.Marshal(elliptic.P384(), pub.X, pub.Y)
 
-	response := KeyStore{
+	k = KeyStore{
 		PrivateKey: hex.EncodeToString(priv.D.Bytes()),
 		PublicKey:  "goat_" + hex.EncodeToString(pubkey),
 	}
 
-	bytes, err := json.Marshal(response)
-	if err != nil {
-		fmt.Println("error:", err)
-	}
-
-	fmt.Println(string(bytes))
+	return k
 }
 
 func (t *Transaction) SignTransaction(privateKey string) (r, s string) {
