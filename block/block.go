@@ -276,6 +276,8 @@ func GetMaxBlockNumberFromNetwork() (max_block int, nodes []string){
     }
   }
 
+  fmt.Println("max block:", max_block)
+
   return max_block, nodes
 }
 
@@ -322,11 +324,14 @@ func FindMaxBlock() (max int) {
     if err != nil {
       fmt.Println("error:", err)
     }
-    if int(cur) > max {
-      max = int(cur)
+    current := int(cur)
+    fmt.Println("current", current, "cur", cur)
+    if current > max {
+      max = current
     }
   }
 
+  fmt.Println("max:", max)
   return max
 }
 
