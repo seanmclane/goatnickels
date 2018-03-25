@@ -456,10 +456,10 @@ func SendVoteToNetwork() {
 func CheckConsensus() {
   //TODO: final criteria for consensus = 2/3 of stakes sign hash of candidate set transaction
 
-  cs_hash := HashCandidateSet(&CandidateSet)
+  
 
-  var match int
-  var total int
+  vote_count := make(map[string]int)
+  total := 0
 
   //TODO: get proportions for all, this won't work if this node is the one out of sync
   //changed the consensus to check votes in voteset
@@ -467,16 +467,19 @@ func CheckConsensus() {
   //TODO: if not, wait and request new block
 
   for _, v := range VoteSet {
-    v_hash, err := hex.DecodeString(v.Hash)
-    if err != nil {
-      fmt.Println("error:", err)
-    }
-    if bytes.Equal(v_hash, cs_hash) {
-      match += 1
-    }
+    vote_count[v.Hash] += 1
     total += 1
   }
 
+  winning_vote := 0
+  var winning_hash string
+  for key, vote := range vote_count {
+    fmt.Println("Votes for each hash:", vote_count[key])
+    if vote > winning_vote {
+      winning_vote = vote
+      winning_hash = key
+    }
+  }
   fmt.Println("Total votes:", total)
 
   if total < 1 {
@@ -484,8 +487,18 @@ func CheckConsensus() {
     return
   }
 
-  if match / total >= 2/3 {
-    NextBlock()
+  if winning_vote / total >= 2/3 {
+    cs_hash := HashCandidateSet(&CandidateSet)
+    v_hash, err := hex.DecodeString(winning_hash)
+    if err != nil {
+      fmt.Println("error:", err)
+    }
+
+    if bytes.Equal(v_hash, cs_hash) {
+      NextBlock()
+    } else {
+      //TODO: wait for next block and pull it from network
+    }
   } else {
     //TODO: tell network to restart consensus round
     fmt.Println("No consensus reached")
