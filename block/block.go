@@ -221,7 +221,7 @@ func InitializeState() {
     local_max = max_block
   }
 
-  b := ReadBlockFromLocalStorage(strconv.Itoa(int(local_max)))
+  b := ReadBlockFromLocalStorage(strconv.Itoa(local_max))
 
   //make bytestring to Block
   err := json.Unmarshal(b, &LastGoatBlock)
