@@ -649,31 +649,60 @@ func (t *Transaction) AddTransaction() (ok bool) {
 	return ok
 }
 
+//begin accessory functions and types for multisorting transactions
+type lessFunc func(p1, p2 *Transaction) bool
+type multiSorter struct {
+	transactions []Transaction
+	less         []lessFunc
+}
+
+func (ms *multiSorter) Sort(transactions []Transaction) {
+	ms.transactions = transactions
+	sort.Sort(ms)
+}
+func (ms *multiSorter) Len() int {
+	return len(ms.transactions)
+}
+func (ms *multiSorter) Swap(i, j int) {
+	ms.transactions[i], ms.transactions[j] = ms.transactions[j], ms.transactions[i]
+}
+func (ms *multiSorter) Less(i, j int) bool {
+	p, q := &ms.transactions[i], &ms.transactions[j]
+	var k int
+	for k = 0; k < len(ms.less)-1; k++ {
+		less := ms.less[k]
+		switch {
+		case less(p, q):
+			return true
+		case less(q, p):
+			return false
+		}
+	}
+	return ms.less[k](p, q)
+}
+func OrderedBy(less ...lessFunc) *multiSorter {
+	return &multiSorter{
+		less: less,
+	}
+}
+
+//end accessory functions and types for multisorting transactions
+
 func SortTransactions() {
 	//order the candidate set to apply deterministically
 
-	sort.Slice(CandidateSet, func(i, j int) bool {
+	fromSort := func(t1, t2 *Transaction) bool {
+		return t1.From < t2.From
+	}
+	amountSort := func(t1, t2 *Transaction) bool {
+		return t1.Amount > t2.Amount
+	}
+	sequenceSort := func(t1, t2 *Transaction) bool {
+		return t1.Sequence < t2.Sequence
+	}
 
-		//first order by from asc
-		if CandidateSet[i].From > CandidateSet[j].From {
-			return true
-		}
-		if CandidateSet[j].From < CandidateSet[i].From {
-			return false
-		}
+	OrderedBy(fromSort, amountSort, sequenceSort).Sort(CandidateSet)
 
-		//then by amount asc
-		if CandidateSet[i].Amount > CandidateSet[j].Amount {
-			return true
-		}
-		if CandidateSet[j].Amount < CandidateSet[i].Amount {
-			return false
-		}
-
-		//then by sequence asc
-		return CandidateSet[i].Sequence < CandidateSet[j].Sequence
-
-	})
 }
 
 func (d *Data) ApplyTransactions() {
