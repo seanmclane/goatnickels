@@ -701,11 +701,6 @@ func (b *Block) WriteBlockToLocalStorage() {
 
 }
 
-type AccountResponse struct {
-	PrivateKey string `json:"private_key"`
-	PublicKey  string `json:"public_key"`
-}
-
 func GenerateAccount() {
 	//create the keypair
 	priv, err := ecdsa.GenerateKey(elliptic.P384(), rand.Reader)
@@ -717,7 +712,7 @@ func GenerateAccount() {
 	pub := priv.PublicKey
 	pubkey := elliptic.Marshal(elliptic.P384(), pub.X, pub.Y)
 
-	response := AccountResponse{
+	response := KeyStore{
 		PrivateKey: hex.EncodeToString(priv.D.Bytes()),
 		PublicKey:  "goat_" + hex.EncodeToString(pubkey),
 	}
@@ -730,7 +725,6 @@ func GenerateAccount() {
 	fmt.Println(string(bytes))
 }
 
-//TODO: make this real and not a test of some hardcoded values
 func (t *Transaction) SignTransaction(privateKey string) (r, s string) {
 	hash := t.HashTransaction()
 	//recreate ecdsa.PrivateKey from private_key
