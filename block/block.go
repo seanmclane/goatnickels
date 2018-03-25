@@ -14,6 +14,7 @@ import (
 	"net/http"
 	"os"
 	"os/user"
+	"sort"
 	"strconv"
 	"time"
 )
@@ -648,7 +649,37 @@ func (t *Transaction) AddTransaction() (ok bool) {
 	return ok
 }
 
+func SortTransactions() {
+	//order the candidate set to apply deterministically
+
+	sort.Slice(CandidateSet, func(i, j int) bool {
+
+		//first order by from asc
+		if CandidateSet[i].From > CandidateSet[j].From {
+			return true
+		}
+		if CandidateSet[j].From < CandidateSet[i].From {
+			return false
+		}
+
+		//then by amount asc
+		if CandidateSet[i].Amount > CandidateSet[j].Amount {
+			return true
+		}
+		if CandidateSet[j].Amount < CandidateSet[i].Amount {
+			return false
+		}
+
+		//then by sequence asc
+		return CandidateSet[i].Sequence < CandidateSet[j].Sequence
+
+	})
+}
+
 func (d *Data) ApplyTransactions() {
+
+	SortTransactions()
+
 	//add and subtract from accounts
 	for _, txion := range CandidateSet {
 		//check if sequence is incremented by one
