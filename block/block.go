@@ -283,7 +283,7 @@ func GetMaxBlockNumberFromNetwork() (max_block_id int, nodes []string){
 
   fmt.Println("max block:", max_block_id)
 
-  return max_block, nodes
+  return max_block_id, nodes
 }
 
 
