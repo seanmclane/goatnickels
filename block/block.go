@@ -576,6 +576,12 @@ func RewardVoters(hash string) {
 				To:     v.Account,
 				Amount: 100000000, //TODO: scale reward to stake
 			})
+		} else {
+			CandidateSet = append(CandidateSet, Transaction{
+				From:   "mine",
+				To:     v.Account,
+				Amount: -100000000, //TODO: scale reward to stake
+			})
 		}
 	}
 }
