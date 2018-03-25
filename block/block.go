@@ -717,17 +717,13 @@ func SortTransactions() {
 		return t1.Sequence < t2.Sequence
 	}
 
-	OrderedBy(fromSort, amountSort, sequenceSort).Sort(CandidateSet)
+	OrderedBy(fromSort, sequenceSort, amountSort).Sort(CandidateSet)
 
 }
 
 func (d *Data) ApplyTransactions() {
 
-	fmt.Println(CandidateSet)
-
 	SortTransactions()
-
-	fmt.Println(CandidateSet)
 
 	//add and subtract from accounts
 	for _, txion := range CandidateSet {

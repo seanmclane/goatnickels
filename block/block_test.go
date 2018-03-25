@@ -1,7 +1,6 @@
 package block
 
 import (
-	"fmt"
 	"testing"
 )
 
@@ -14,10 +13,10 @@ func BenchmarkCreateGenesisBlock(b *testing.B) {
 func TestSortTransactions(t *testing.T) {
 	CandidateSet = []Transaction{
 		{"a", "b", 100, 2, "", ""},
-		{"b", "a", 100, 1, "", ""},
+		{"b", "a", 50, 1, "", ""},
 		{"a", "b", 100, 1, "", ""},
 		{"a", "b", 101, 1, "", ""},
-		{"b", "a", 50, 2, "", ""},
+		{"b", "a", 100, 2, "", ""},
 	}
 
 	SortTransactions()
@@ -26,11 +25,9 @@ func TestSortTransactions(t *testing.T) {
 		{"a", "b", 101, 1, "", ""},
 		{"a", "b", 100, 1, "", ""},
 		{"a", "b", 100, 2, "", ""},
-		{"b", "a", 100, 1, "", ""},
-		{"b", "a", 50, 2, "", ""},
+		{"b", "a", 50, 1, "", ""},
+		{"b", "a", 100, 2, "", ""},
 	}
-
-	fmt.Println(CandidateSet)
 
 	for key, cs := range CandidateSet {
 		if cs.From != expected[key].From {
