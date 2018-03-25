@@ -198,31 +198,30 @@ func CreateGenesisBlock() {
 
 //TODO: figure out where to keep data structures and have one way imports
 type MaxBlockResponse struct {
-  MaxBlock int64 `json:"max_block"`
+  MaxBlock int `json:"max_block"`
 }
 
 func InitializeState() {
 
-  config := LoadConfig()
-
   //initialize voting to whether a voting round on the candidate set is happening
   Voting = false
 
-  max_list := GetMaxBlockFromNetwork()
+  max_block, nodes := GetMaxBlockNumberFromNetwork()
 
   //genesis block only created by calling function manually
   //always check the network for max block, then start
 
-  max := FindMaxBlock()
+  local_max := FindMaxBlock()
 
   //check if different and get blocks from network if behind
-  //TODO: loop through max_list and find highest block?? most common? or just make get max block only keep the highest returned block?
-  if max < max_list[0] {
-    GetBlockChainFromNetwork(max, max_list[0], config.Nodes[0])
-    max = max_list[0]
+  //TODO: loop through nodes? or retry on failure
+  //TODO: loop to recheck that max_block was not updated while catching up to network
+  if local_max < max_block {
+    GetBlockChainFromNetwork(local_max, max_block, nodes[0])
+    local_max = max_block
   }
 
-  b := ReadBlockFromLocalStorage(strconv.Itoa(int(max)))
+  b := ReadBlockFromLocalStorage(strconv.Itoa(int(local_max)))
 
   //make bytestring to Block
   err := json.Unmarshal(b, &LastGoatBlock)
@@ -232,14 +231,16 @@ func InitializeState() {
 
 }
 
-func GetMaxBlockFromNetwork() (max_list []int64){
+func GetMaxBlockNumberFromNetwork() (max_block int, nodes []string){
   
   config := LoadConfig()
 
   //TODO: remove self node from list of nodes
 
-  for key, node := range config.Nodes {
-    max_list = append(max_list, 0)
+  max_list := make(map[string]int)
+  max_count := make(map[int]int)
+
+  for _, node := range config.Nodes {
     r, err := client.Get("http://"+node+":3000/api/v1/maxblock")
     if err != nil {
       fmt.Println("no response from node:", node)
@@ -251,30 +252,54 @@ func GetMaxBlockFromNetwork() (max_list []int64){
       if err != nil {
         fmt.Println("error:", err)
       }
-      max_list[key] = res.MaxBlock
+      max_list[node] = res.MaxBlock
     }
   }
 
-  return max_list
+  for _, max := range max_list {
+    max_count[max] += 1
+  }
+
+  //TODO: use large % of network agreement to determine true max block
+  max_block = 0
+  max_number := 0
+  for max_num, count := range max_count {
+    if count > max_block {
+      max_block = count
+      max_number = max_num
+    }
+  }
+
+  for node, max_num := range max_list {
+    if max_num == max_number {
+      nodes = append(nodes, node)
+    }
+  }
+
+  return max_block, nodes
 }
 
-func GetBlockChainFromNetwork(local_max int64, network_max int64, node string) {
-  for i := local_max+1; i <= network_max; i++ {
-    //TODO get block from network, then write to local storage for each block
-    r, err := client.Get("http://"+node+":3000/api/v1/block/"+strconv.Itoa(int(i)))
+
+func GetBlockFromNetwork(block_number int, node string) {
+  r, err := client.Get("http://"+node+":3000/api/v1/block/"+strconv.Itoa(int(block_number)))
+  if err != nil {
+    fmt.Println("could not get block from", node)
+    fmt.Println("error:", err)
+  } else {
+    defer r.Body.Close()
+    var b Block
+    err = json.NewDecoder(r.Body).Decode(&b)
     if err != nil {
-      fmt.Println("could not get block from", node)
       fmt.Println("error:", err)
-    } else {
-      defer r.Body.Close()
-      var b Block
-      err = json.NewDecoder(r.Body).Decode(&b)
-      if err != nil {
-        fmt.Println("error:", err)
-      }
-      b.WriteBlockToLocalStorage()
     }
-    //TODO validate blocks!
+    b.WriteBlockToLocalStorage()
+  }
+  //TODO validate blocks!
+}
+
+func GetBlockChainFromNetwork(local_max int, network_max int, node string) {
+  for i := local_max+1; i <= network_max; i++ {
+    GetBlockFromNetwork(i, node)
   }
 }
 
@@ -284,7 +309,7 @@ func ReadBlockFromLocalStorage(index string) (b []byte) {
   return b
 }
 
-func FindMaxBlock() (max int64) {
+func FindMaxBlock() (max int) {
   config := LoadConfig()
   files, err := ioutil.ReadDir(config.Directory)
   if err != nil {
@@ -297,8 +322,8 @@ func FindMaxBlock() (max int64) {
     if err != nil {
       fmt.Println("error:", err)
     }
-    if cur > max {
-      max = cur
+    if int(cur) > max {
+      max = int(cur)
     }
   }
 
@@ -456,8 +481,6 @@ func SendVoteToNetwork() {
 func CheckConsensus() {
   //TODO: final criteria for consensus = 2/3 of stakes sign hash of candidate set transaction
 
-  
-
   vote_count := make(map[string]int)
   total := 0
 
@@ -497,10 +520,13 @@ func CheckConsensus() {
     if bytes.Equal(v_hash, cs_hash) {
       NextBlock()
     } else {
-      //TODO: wait for next block and pull it from network
+      time.Sleep(3 * time.Second)
+      max_block, nodes := GetMaxBlockNumberFromNetwork()
+      GetBlockFromNetwork(max_block, nodes[0])
+      //TODO: loop through to get real max block
     }
   } else {
-    //TODO: tell network to restart consensus round
+    //TODO: tell network to restart consensus round?
     fmt.Println("No consensus reached")
   }
 }

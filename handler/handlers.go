@@ -106,7 +106,7 @@ func GetBlock(w http.ResponseWriter, r *http.Request) {
 }
 
 type MaxBlockResponse struct {
-  MaxBlock int64 `json:"max_block"`
+  MaxBlock int `json:"max_block"`
 }
 
 func GetMaxBlock(w http.ResponseWriter, r *http.Request) {
