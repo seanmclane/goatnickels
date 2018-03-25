@@ -296,15 +296,37 @@ func GetBlockFromNetwork(blockNumber int, node string) {
 		if err != nil {
 			fmt.Println("error:", err)
 		}
-		b.WriteBlockToLocalStorage()
+		if b.VerifyBlock() {
+			b.WriteBlockToLocalStorage()
+		} else {
+			fmt.Println("error: invalid block not written")
+			//TODO: return something for the parent to try to get the block again
+		}
 	}
-	//TODO validate blocks!
 }
 
 func GetBlockChainFromNetwork(localMax int, networkMax int, node string) {
 	for i := localMax + 1; i <= networkMax; i++ {
 		GetBlockFromNetwork(i, node)
 	}
+}
+
+func (b *Block) VerifyBlock() bool {
+	prev := ReadBlockFromLocalStorage(strconv.Itoa(b.Index - 1))
+	prev.HashBlock()
+	//check if last hash is previous block hash
+	if !bytes.Equal(prev.Hash, b.LastHash) {
+		fmt.Println("not equal to lasthash", hex.EncodeToString(prev.Hash), hex.EncodeToString(b.LastHash))
+		return false
+	}
+	//check if current hash is real hash
+	bHash := b.Hash
+	b.HashBlock()
+	if !bytes.Equal(bHash, b.Hash) {
+		fmt.Println("not same block data", hex.EncodeToString(bHash), hex.EncodeToString(b.Hash))
+		return false
+	}
+	return true
 }
 
 func ReadBlockFromLocalStorage(index string) (b Block) {
