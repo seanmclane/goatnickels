@@ -157,7 +157,7 @@ func Vote(w http.ResponseWriter, r *http.Request) {
 //more for ease of testing than for true use, since sending your private key to an unknown server is bad...
 type SignatureRequest struct {
   Transaction block.Transaction `json:"transaction"`
-  Private_key string `json:"private_key"`
+  PrivateKey string `json:"private_key"`
 }
 
 func SignTxion(w http.ResponseWriter, req *http.Request) {
@@ -167,14 +167,14 @@ func SignTxion(w http.ResponseWriter, req *http.Request) {
     http.Error(w, err.Error(), http.StatusInternalServerError)
   }
 
-  var sig_req SignatureRequest
-  err = json.Unmarshal(body, &sig_req)
+  var sigReq SignatureRequest
+  err = json.Unmarshal(body, &sigReq)
   if err != nil {
     http.Error(w, err.Error(), http.StatusInternalServerError)
     return
   }
 
-  r, s := sig_req.Transaction.SignTransaction(sig_req.Private_key)
+  r, s := sigReq.Transaction.SignTransaction(sigReq.PrivateKey)
 
   var response []byte
   if r != "" && s != "" {

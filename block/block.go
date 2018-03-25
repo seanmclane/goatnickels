@@ -145,10 +145,10 @@ func AsciiGoat() {
 func (b *Block) HashBlock() {
   //create a hash of all values in the block
   //TODO: handle error
-  hash_data, _ := json.Marshal(b.Data)
-  block_string := strconv.Itoa(b.Index)+string(hash_data)+hex.EncodeToString(b.LastHash[:])
-  fixed_hash := sha3.Sum512([]byte(block_string))
-  b.Hash = fixed_hash[:]
+  hashData, _ := json.Marshal(b.Data)
+  blockString := strconv.Itoa(b.Index)+string(hashData)+hex.EncodeToString(b.LastHash[:])
+  fixedHash := sha3.Sum512([]byte(blockString))
+  b.Hash = fixedHash[:]
 }
 
 func CreateGenesisBlock() {
@@ -179,8 +179,8 @@ func CreateGenesisBlock() {
   }
 
   //convert [64]byte to []byte
-  fixed_hash := sha3.Sum512([]byte("Goatnickels baby!"))
-  hash := fixed_hash[:]
+  fixedHash := sha3.Sum512([]byte("Goatnickels baby!"))
+  hash := fixedHash[:]
 
   //genesis block for now
   b := Block {
@@ -206,22 +206,22 @@ func InitializeState() {
   //initialize voting to whether a voting round on the candidate set is happening
   Voting = false
 
-  max_block, nodes := GetMaxBlockNumberFromNetwork()
+  maxBlock, nodes := GetMaxBlockNumberFromNetwork()
 
   //genesis block only created by calling function manually
   //always check the network for max block, then start
 
-  local_max := FindMaxBlock()
+  localMax := FindMaxBlock()
 
   //check if different and get blocks from network if behind
   //TODO: loop through nodes? or retry on failure
   //TODO: loop to recheck that max_block was not updated while catching up to network
-  if local_max < max_block {
-    GetBlockChainFromNetwork(local_max, max_block, nodes[0])
-    local_max = max_block
+  if localMax < maxBlock {
+    GetBlockChainFromNetwork(localMax, maxBlock, nodes[0])
+    localMax = maxBlock
   }
 
-  b := ReadBlockFromLocalStorage(strconv.Itoa(local_max))
+  b := ReadBlockFromLocalStorage(strconv.Itoa(localMax))
 
   //make bytestring to Block
   err := json.Unmarshal(b, &LastGoatBlock)
@@ -231,16 +231,16 @@ func InitializeState() {
 
 }
 
-func GetMaxBlockNumberFromNetwork() (max_block_id int, nodes []string){
+func GetMaxBlockNumberFromNetwork() (maxBlockId int, nodes []string){
   
   config := LoadConfig()
 
   //TODO: remove self node from list of nodes
 
   //list of nodes with the maximum block id as value
-  max_list := make(map[string]int)
+  maxList := make(map[string]int)
   //list of maximum block ids with the count as value
-  max_count := make(map[int]int)
+  maxCount := make(map[int]int)
 
   for _, node := range config.Nodes {
     r, err := client.Get("http://"+node+":3000/api/v1/maxblock")
@@ -254,41 +254,41 @@ func GetMaxBlockNumberFromNetwork() (max_block_id int, nodes []string){
       if err != nil {
         fmt.Println("error:", err)
       }
-      max_list[node] = res.MaxBlock
+      maxList[node] = res.MaxBlock
     }
   }
 
   //count occurences of max block id across nodes
-  for _, max_block_id := range max_list {
-    max_count[max_block_id] += 1
+  for _, maxBlockId := range maxList {
+    maxCount[maxBlockId] += 1
   }
 
   //TODO: use large % of network agreement to determine true max block
   //get the max block id with the highest count
-  max_block_count := 0
-  max_block_id = 0
-  for block_id, count := range max_count {
-    if count > max_block_count {
-      max_block_count = count
-      max_block_id = block_id
+  maxBlockCount := 0
+  maxBlockId = 0
+  for blockId, count := range maxCount {
+    if count > maxBlockCount {
+      maxBlockCount = count
+      maxBlockId = blockId
     }
   }
 
   //get the nodes that have that block
-  for node, block_id := range max_list {
-    if block_id == max_block_id {
+  for node, blockId := range maxList {
+    if blockId == maxBlockId {
       nodes = append(nodes, node)
     }
   }
 
-  fmt.Println("max block:", max_block_id)
+  fmt.Println("max block:", maxBlockId)
 
-  return max_block_id, nodes
+  return maxBlockId, nodes
 }
 
 
-func GetBlockFromNetwork(block_number int, node string) {
-  r, err := client.Get("http://"+node+":3000/api/v1/block/"+strconv.Itoa(int(block_number)))
+func GetBlockFromNetwork(blockNumber int, node string) {
+  r, err := client.Get("http://"+node+":3000/api/v1/block/"+strconv.Itoa(int(blockNumber)))
   if err != nil {
     fmt.Println("could not get block from", node)
     fmt.Println("error:", err)
@@ -304,8 +304,8 @@ func GetBlockFromNetwork(block_number int, node string) {
   //TODO validate blocks!
 }
 
-func GetBlockChainFromNetwork(local_max int, network_max int, node string) {
-  for i := local_max+1; i <= network_max; i++ {
+func GetBlockChainFromNetwork(localMax int, networkMax int, node string) {
+  for i := localMax+1; i <= networkMax; i++ {
     GetBlockFromNetwork(i, node)
   }
 }
@@ -340,11 +340,11 @@ func FindMaxBlock() (max int) {
 
 func MakeNextBlockData() (data Data){
   
-  var empty_txions []Transaction
+  var emptyTxions []Transaction
 
   data = Data{
     State: LastGoatBlock.Data.State,
-    Transactions: empty_txions,
+    Transactions: emptyTxions,
   }
 
   data.ApplyTransactions()
@@ -384,13 +384,13 @@ func (v *Vote) VerifyVote() (ok bool) {
     return false
   }
   //remove goat_ from key
-  public_key := v.Account[5:]
+  publicKey := v.Account[5:]
   //recreate ecdsa.PublicKey from pub
-  byte_key, err := hex.DecodeString(public_key)
+  byteKey, err := hex.DecodeString(publicKey)
   if err != nil {
     fmt.Println("error:", err)
   }
-  x, y := elliptic.Unmarshal(elliptic.P384(), byte_key)
+  x, y := elliptic.Unmarshal(elliptic.P384(), byteKey)
   if x == nil || y == nil {
     return false
   }
@@ -398,20 +398,20 @@ func (v *Vote) VerifyVote() (ok bool) {
   pub.Curve = elliptic.P384()
   pub.X, pub.Y = x, y
   //convert r and s back to big ints
-  byte_r, err := hex.DecodeString(v.Signature.R)
+  byteR, err := hex.DecodeString(v.Signature.R)
   if err != nil {
     fmt.Println("error:", err)
   }
-  r := new(big.Int).SetBytes(byte_r)
-  byte_s, err := hex.DecodeString(v.Signature.S)
+  r := new(big.Int).SetBytes(byteR)
+  byteS, err := hex.DecodeString(v.Signature.S)
   if err != nil {
     fmt.Println("error:", err)
   }
-  s := new(big.Int).SetBytes(byte_s)
+  s := new(big.Int).SetBytes(byteS)
   //verify signature
-  sig_ok := ecdsa.Verify(pub, hash, r, s)
+  sigOk := ecdsa.Verify(pub, hash, r, s)
   
-  if sig_ok {
+  if sigOk {
     fmt.Println("vote verified")
     return true
   } else {
@@ -421,32 +421,32 @@ func (v *Vote) VerifyVote() (ok bool) {
 
 func (v *Vote) SignVote() (r string, s string) {
   keystore := LoadKeyStore()
-  private_key := keystore.PrivateKey
+  privateKey := keystore.PrivateKey
 
   hash := v.HashVote()
   //recreate ecdsa.PrivateKey from private_key
-  byte_key, err := hex.DecodeString(private_key)
+  byteKey, err := hex.DecodeString(privateKey)
   if err != nil {
     fmt.Println("error:", err)
   }
-  bigint_key := new(big.Int).SetBytes(byte_key)
+  bigintKey := new(big.Int).SetBytes(byteKey)
   priv := new(ecdsa.PrivateKey)
   priv.PublicKey.Curve = elliptic.P384()
-  priv.PublicKey.X, priv.PublicKey.Y = priv.PublicKey.Curve.ScalarBaseMult(byte_key)
-  priv.D = bigint_key
-  r_int, s_int, err := ecdsa.Sign(rand.Reader, priv, hash)
+  priv.PublicKey.X, priv.PublicKey.Y = priv.PublicKey.Curve.ScalarBaseMult(byteKey)
+  priv.D = bigintKey
+  rInt, sInt, err := ecdsa.Sign(rand.Reader, priv, hash)
   if err != nil {
     fmt.Println("error:", err)
   }
-  r = hex.EncodeToString(r_int.Bytes())
-  s = hex.EncodeToString(s_int.Bytes())
+  r = hex.EncodeToString(rInt.Bytes())
+  s = hex.EncodeToString(sInt.Bytes())
   return r, s
 }
 
 func (v *Vote) HashVote() (h []byte) {
-  hash_string := v.Account+v.Hash
-  fixed_hash := sha3.Sum512([]byte(hash_string))
-  h = fixed_hash[:]
+  hashString := v.Account+v.Hash
+  fixedHash := sha3.Sum512([]byte(hashString))
+  h = fixedHash[:]
   return h
 }
 
@@ -489,7 +489,7 @@ func SendVoteToNetwork() {
 func CheckConsensus() {
   //TODO: final criteria for consensus = 2/3 of stakes sign hash of candidate set transaction
 
-  vote_count := make(map[string]int)
+  voteCount := make(map[string]int)
   total := 0
 
   //TODO: get proportions for all, this won't work if this node is the one out of sync
@@ -498,28 +498,26 @@ func CheckConsensus() {
   //TODO: if not, wait and request new block
 
   for _, v := range VoteSet {
-    vote_count[v.Hash] += 1
+    voteCount[v.Hash] += 1
     total += 1
   }
 
-  winning_vote := 0
-  var winning_hash string
-  for key, vote := range vote_count {
-    fmt.Println("Votes for each hash:", vote_count[key])
-    if vote > winning_vote {
-      winning_vote = vote
-      winning_hash = key
+  winningVote := 0
+  var winningHash string
+  for key, vote := range voteCount {
+    if vote > winningVote {
+      winningVote = vote
+      winningHash = key
     }
   }
-  fmt.Println("Total votes:", total)
 
   if total < 1 {
     //catch up to network
     time.Sleep(3 * time.Second)
-    max_block, nodes := GetMaxBlockNumberFromNetwork()
-    if FindMaxBlock() < max_block {
-      GetBlockFromNetwork(max_block, nodes[0])
-      b := ReadBlockFromLocalStorage(strconv.Itoa(max_block))
+    maxBlock, nodes := GetMaxBlockNumberFromNetwork()
+    if FindMaxBlock() < maxBlock {
+      GetBlockFromNetwork(maxBlock, nodes[0])
+      b := ReadBlockFromLocalStorage(strconv.Itoa(maxBlock))
       //make bytestring to Block
       err := json.Unmarshal(b, &LastGoatBlock)
       if err != nil {
@@ -532,20 +530,20 @@ func CheckConsensus() {
     return
   }
 
-  if winning_vote / total >= 2/3 {
-    cs_hash := HashCandidateSet(&CandidateSet)
-    v_hash, err := hex.DecodeString(winning_hash)
+  if winningVote / total >= 2/3 {
+    csHash := HashCandidateSet(&CandidateSet)
+    vHash, err := hex.DecodeString(winningHash)
     if err != nil {
       fmt.Println("error:", err)
     }
 
-    if bytes.Equal(v_hash, cs_hash) {
+    if bytes.Equal(vHash, csHash) {
       NextBlock()
     } else {
       time.Sleep(3 * time.Second)
-      max_block, nodes := GetMaxBlockNumberFromNetwork()
-      GetBlockFromNetwork(max_block, nodes[0])
-      b := ReadBlockFromLocalStorage(strconv.Itoa(max_block))
+      maxBlock, nodes := GetMaxBlockNumberFromNetwork()
+      GetBlockFromNetwork(maxBlock, nodes[0])
+      b := ReadBlockFromLocalStorage(strconv.Itoa(maxBlock))
       //make bytestring to Block
       err := json.Unmarshal(b, &LastGoatBlock)
       if err != nil {
@@ -568,8 +566,8 @@ func HashCandidateSet(cs *[]Transaction) (h []byte){
   for _, txion := range *cs {
     sum += hex.EncodeToString(txion.HashTransaction())
   }
-  fixed_hash := sha3.Sum512([]byte(sum))
-  h = fixed_hash[:] 
+  fixedHash := sha3.Sum512([]byte(sum))
+  h = fixedHash[:] 
   return h
 }
 
@@ -583,20 +581,20 @@ func ResetCandidateSet() {
 
 func NextBlock() {
 
-  next_block := Block {
+  nextBlock := Block {
     Index: LastGoatBlock.Index+1,
     Timestamp: int(time.Now().UTC().Unix()),
     Data: MakeNextBlockData(),
     LastHash: LastGoatBlock.Hash,
   }
   
-  next_block.HashBlock()
+  nextBlock.HashBlock()
 
-  DescribeBlock(next_block)
+  DescribeBlock(nextBlock)
 
-  LastGoatBlock = next_block
+  LastGoatBlock = nextBlock
 
-  next_block.WriteBlockToLocalStorage()
+  nextBlock.WriteBlockToLocalStorage()
 
 }
 
@@ -729,31 +727,31 @@ func GenerateAccount() {
 }
 
 //TODO: make this real and not a test of some hardcoded values
-func (t *Transaction) SignTransaction (private_key string) (r, s string) {
+func (t *Transaction) SignTransaction (privateKey string) (r, s string) {
   hash := t.HashTransaction()
   //recreate ecdsa.PrivateKey from private_key
-  byte_key, err := hex.DecodeString(private_key)
+  byteKey, err := hex.DecodeString(privateKey)
   if err != nil {
     fmt.Println("error:", err)
   }
-  bigint_key := new(big.Int).SetBytes(byte_key)
+  bigintKey := new(big.Int).SetBytes(byteKey)
   priv := new(ecdsa.PrivateKey)
   priv.PublicKey.Curve = elliptic.P384()
-  priv.PublicKey.X, priv.PublicKey.Y = priv.PublicKey.Curve.ScalarBaseMult(byte_key)
-  priv.D = bigint_key
-  r_int, s_int, err := ecdsa.Sign(rand.Reader, priv, hash)
+  priv.PublicKey.X, priv.PublicKey.Y = priv.PublicKey.Curve.ScalarBaseMult(byteKey)
+  priv.D = bigintKey
+  rInt, sInt, err := ecdsa.Sign(rand.Reader, priv, hash)
   if err != nil {
     fmt.Println("error:", err)
   }
-  r = hex.EncodeToString(r_int.Bytes())
-  s = hex.EncodeToString(s_int.Bytes())
+  r = hex.EncodeToString(rInt.Bytes())
+  s = hex.EncodeToString(sInt.Bytes())
   return r, s
 }
 
 func (t *Transaction) HashTransaction() (h []byte) {
-  hash_string := t.To+t.From+strconv.Itoa(t.Amount)+strconv.Itoa(t.Sequence)
-  fixed_hash := sha3.Sum512([]byte(hash_string))
-  h = fixed_hash[:]
+  hashString := t.To+t.From+strconv.Itoa(t.Amount)+strconv.Itoa(t.Sequence)
+  fixedHash := sha3.Sum512([]byte(hashString))
+  h = fixedHash[:]
   return h
 }
 
@@ -767,13 +765,13 @@ func (t *Transaction) VerifyTransaction() (ok bool) {
     return false
   }
   //remove goat_ from key
-  public_key := t.From[5:]
+  publicKey := t.From[5:]
   //recreate ecdsa.PublicKey from pub
-  byte_key, err := hex.DecodeString(public_key)
+  byteKey, err := hex.DecodeString(publicKey)
   if err != nil {
     fmt.Println("error:", err)
   }
-  x, y := elliptic.Unmarshal(elliptic.P384(), byte_key)
+  x, y := elliptic.Unmarshal(elliptic.P384(), byteKey)
   if x == nil || y == nil {
     return false
   }
@@ -781,22 +779,22 @@ func (t *Transaction) VerifyTransaction() (ok bool) {
   pub.Curve = elliptic.P384()
   pub.X, pub.Y = x, y
   //convert r and s back to big ints
-  byte_r, err := hex.DecodeString(t.R)
+  byteR, err := hex.DecodeString(t.R)
   if err != nil {
     fmt.Println("error:", err)
   }
-  r := new(big.Int).SetBytes(byte_r)
-  byte_s, err := hex.DecodeString(t.S)
+  r := new(big.Int).SetBytes(byteR)
+  byteS, err := hex.DecodeString(t.S)
   if err != nil {
     fmt.Println("error:", err)
   }
-  s := new(big.Int).SetBytes(byte_s)
+  s := new(big.Int).SetBytes(byteS)
   //verify signature
-  sig_ok := ecdsa.Verify(pub, hash, r, s)
+  sigOk := ecdsa.Verify(pub, hash, r, s)
   //verify balance is sufficient
-  spend_ok := t.VerifyNegativeSpend()
+  spendOk := t.VerifyNegativeSpend()
   //do not check sequence here, so you can have more than one transaction per block
-  if sig_ok && spend_ok {
+  if sigOk && spendOk {
     return true
   } else {
     return false

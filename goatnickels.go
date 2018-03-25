@@ -39,27 +39,27 @@ func mine() {
 }
 
 func main() {
-  genesis_flag := flag.String("genesis", "n", "create the genesis block?")
-  serve_flag := flag.String("serve", "n", "y or n")
-  acct_flag := flag.String("generate-acct", "n", "do you want generate a keypair for a new account?")
-  sign_flag := flag.String("sign", "n", "do you want to sign a transaction?")
-  //hash_flag := flag.String("hash", "no", "do you want to hash a transaction?")
-  test_flag := flag.String("test", "n", "do you want to test whatever you're working on now?")
+  genesisFlag := flag.String("genesis", "n", "create the genesis block?")
+  serveFlag := flag.String("serve", "n", "y or n")
+  acctFlag := flag.String("generate-acct", "n", "do you want generate a keypair for a new account?")
+  signFlag := flag.String("sign", "n", "do you want to sign a transaction?")
+  //hashFlag := flag.String("hash", "no", "do you want to hash a transaction?")
+  testFlag := flag.String("test", "n", "do you want to test whatever you're working on now?")
 
   //transaction flags
-  to_flag := flag.String("to", "", "what account should be credited in this transaction?")
-  from_flag := flag.String("from", "", "what account should be debited in this transaction?")
-  amount_flag := flag.Int("amount", 0, "how much do you want to send?")
+  toFlag := flag.String("to", "", "what account should be credited in this transaction?")
+  fromFlag := flag.String("from", "", "what account should be debited in this transaction?")
+  amountFlag := flag.Int("amount", 0, "how much do you want to send?")
   //TODO: add sequence or figure out where to source sequence
-  private_key_flag := flag.String("private-key", "", "needed to sign and send a transaction")
+  privateKeyFlag := flag.String("private-key", "", "needed to sign and send a transaction")
 
   flag.Parse()
 
-  if *genesis_flag == "y" {
+  if *genesisFlag == "y" {
     block.CreateGenesisBlock()
   }
 
-  if *serve_flag == "y" {    
+  if *serveFlag == "y" {    
     //define server and routes for blockchain node
     r := mux.NewRouter().StrictSlash(true)
     s := r.PathPrefix("/api/v1").Subrouter()
@@ -85,26 +85,26 @@ func main() {
 
   }
   
-  if *acct_flag == "y" {
+  if *acctFlag == "y" {
     block.GenerateAccount()
   }
 
-  if *sign_flag == "y" {
+  if *signFlag == "y" {
     //create transaction with flag values
     t := block.Transaction{
-      To: *to_flag,
-      From: *from_flag,
+      To: *toFlag,
+      From: *fromFlag,
       //From: "goat_04c12951412edfc215fe6d288491eb1251e2d8d99375c01049588dd228c6346f068246353d84702418f797d672af512d89742f6842b32f43541ea703f08170a67687f75fe0c6f15bd518764dee5476c86f9ba33f28036a76d018c1d7c8b14c307f",
-      Amount: *amount_flag,
+      Amount: *amountFlag,
       Sequence: 1,
     }
-    //private_key := "8b63849798d4633fe16553d428fdd50a1214296f0e02e5ebd0a7c78040a84775153a4dcacfc9dc7f4aeab9cc981fbb78"
-    r, s := t.SignTransaction(*private_key_flag)
+    //privateKey := "8b63849798d4633fe16553d428fdd50a1214296f0e02e5ebd0a7c78040a84775153a4dcacfc9dc7f4aeab9cc981fbb78"
+    r, s := t.SignTransaction(*privateKeyFlag)
     fmt.Println("r:",r)
     fmt.Println("s:",s)
   }
 
-  if *test_flag == "y" {
+  if *testFlag == "y" {
     fmt.Println("test")
   }
 }
