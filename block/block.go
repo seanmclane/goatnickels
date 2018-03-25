@@ -227,13 +227,7 @@ func InitializeState() {
 		localMax = maxBlock
 	}
 
-	b := ReadBlockFromLocalStorage(strconv.Itoa(localMax))
-
-	//make bytestring to Block
-	err := json.Unmarshal(b, &LastGoatBlock)
-	if err != nil {
-		fmt.Println("error:", err)
-	}
+	LastGoatBlock = ReadBlockFromLocalStorage(strconv.Itoa(localMax))
 
 }
 
@@ -313,9 +307,32 @@ func GetBlockChainFromNetwork(localMax int, networkMax int, node string) {
 	}
 }
 
-func ReadBlockFromLocalStorage(index string) (b []byte) {
+func ReadBlockFromLocalStorage(index string) (b Block) {
 	config := LoadConfig()
-	b, _ = ioutil.ReadFile(string(config.Directory) + index)
+	blockJson, err := ioutil.ReadFile(string(config.Directory) + index)
+	if err != nil {
+		fmt.Println("error:", err)
+	}
+	//make bytestring to Block
+	var s StoredBlock
+
+	err = json.Unmarshal(blockJson, &s)
+	if err != nil {
+		fmt.Println("error:", err)
+	}
+
+	//TODO: handle errors
+	lastHash, _ := hex.DecodeString(s.LastHash)
+	hash, _ := hex.DecodeString(s.Hash)
+
+	b = Block{
+		Index:     s.Index,
+		Timestamp: s.Timestamp,
+		Data:      s.Data,
+		LastHash:  lastHash,
+		Hash:      hash,
+	}
+
 	return b
 }
 
@@ -520,12 +537,7 @@ func CheckConsensus() {
 		maxBlock, nodes := GetMaxBlockNumberFromNetwork()
 		if FindMaxBlock() < maxBlock {
 			GetBlockFromNetwork(maxBlock, nodes[0])
-			b := ReadBlockFromLocalStorage(strconv.Itoa(maxBlock))
-			//make bytestring to Block
-			err := json.Unmarshal(b, &LastGoatBlock)
-			if err != nil {
-				fmt.Println("error:", err)
-			}
+			LastGoatBlock = ReadBlockFromLocalStorage(strconv.Itoa(maxBlock))
 			//TODO: loop through to get real max block
 		} else {
 			fmt.Println("No consensus reached due to lack of votes")
@@ -550,14 +562,9 @@ func CheckConsensus() {
 			time.Sleep(3 * time.Second)
 			maxBlock, nodes := GetMaxBlockNumberFromNetwork()
 			GetBlockFromNetwork(maxBlock, nodes[0])
-			b := ReadBlockFromLocalStorage(strconv.Itoa(maxBlock))
-			//make bytestring to Block
-			err := json.Unmarshal(b, &LastGoatBlock)
-			if err != nil {
-				fmt.Println("error:", err)
-			}
-			//TODO: loop through to get real max block
+			LastGoatBlock = ReadBlockFromLocalStorage(strconv.Itoa(maxBlock))
 		}
+		//TODO: loop through to get real max block
 	} else {
 		//TODO: tell network to restart consensus round?
 		fmt.Println("No consensus reached")
@@ -771,8 +778,16 @@ func (d *Data) ApplyTransactions() {
 func (b *Block) WriteBlockToLocalStorage() {
 	config := LoadConfig()
 
+	storedBlock := StoredBlock{
+		Index:     b.Index,
+		Timestamp: b.Timestamp,
+		Data:      b.Data,
+		LastHash:  hex.EncodeToString(b.LastHash),
+		Hash:      hex.EncodeToString(b.Hash),
+	}
+
 	//convert data to plain json
-	out, err := json.Marshal(b)
+	out, err := json.Marshal(storedBlock)
 	if err != nil {
 		fmt.Println("error:", err)
 		return
