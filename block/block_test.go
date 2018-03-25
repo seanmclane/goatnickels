@@ -66,9 +66,12 @@ func TestVerifyBlock(t *testing.T) {
 		Hash:      hash,
 	}
 
-	var blocks = []Block{b1}
+	b2 := b1
+	b2.Data.State = make(map[string]Account)
 
-	var expected = []bool{true}
+	var blocks = []Block{b1, b2}
+
+	var expected = []bool{true, false}
 
 	for key, b := range blocks {
 		ok := b.VerifyBlock()
