@@ -871,6 +871,7 @@ func (t *Transaction) HashTransaction() (h []byte) {
 	fmt.Println(hashString)
 	fixedHash := sha3.Sum512([]byte(hashString))
 	h = fixedHash[:]
+	fmt.Println([]byte(hashString))
 	fmt.Println(hex.EncodeToString(h))
 	return h
 }
