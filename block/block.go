@@ -868,8 +868,10 @@ func (t *Transaction) SignTransaction(privateKey string) (r, s string) {
 
 func (t *Transaction) HashTransaction() (h []byte) {
 	hashString := t.To + t.From + strconv.Itoa(t.Amount) + strconv.Itoa(t.Sequence)
+	fmt.Println(hashString)
 	fixedHash := sha3.Sum512([]byte(hashString))
 	h = fixedHash[:]
+	fmt.Println(hex.EncodeToString(h))
 	return h
 }
 
