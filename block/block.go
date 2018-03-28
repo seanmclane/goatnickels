@@ -5,6 +5,7 @@ import (
 	"crypto/ecdsa"
 	"crypto/elliptic"
 	"crypto/rand"
+	"crypto/sha512"
 	"encoding/hex"
 	"encoding/json"
 	"fmt"
@@ -487,7 +488,7 @@ func (v *Vote) SignVote() (r string, s string) {
 
 func (v *Vote) HashVote() (h []byte) {
 	hashString := v.Account + v.Hash
-	fixedHash := sha3.Sum512([]byte(hashString))
+	fixedHash := sha512.Sum512([]byte(hashString))
 	h = fixedHash[:]
 	return h
 }
@@ -868,11 +869,8 @@ func (t *Transaction) SignTransaction(privateKey string) (r, s string) {
 
 func (t *Transaction) HashTransaction() (h []byte) {
 	hashString := t.To + t.From + strconv.Itoa(t.Amount) + strconv.Itoa(t.Sequence)
-	fmt.Println(hashString)
-	fixedHash := sha3.Sum512([]byte(hashString))
+	fixedHash := sha512.Sum512([]byte(hashString))
 	h = fixedHash[:]
-	fmt.Println(string([]byte(hashString)))
-	fmt.Println(hex.EncodeToString(h))
 	return h
 }
 
@@ -915,6 +913,7 @@ func (t *Transaction) VerifyTransaction() (ok bool) {
 	//verify balance is sufficient
 	spendOk := t.VerifyNegativeSpend()
 	//do not check sequence here, so you can have more than one transaction per block
+	fmt.Println(sigOk, spendOk)
 	if sigOk && spendOk {
 		return true
 	} else {
