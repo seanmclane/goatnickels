@@ -1,5 +1,5 @@
 FROM golang
-ARG CONFIG=./docker/config1.json
+ARG CONFIG=./docker/default-config.json
 ARG KEYSTORE=./docker/keystore1.json
 RUN go get github.com/seanmclane/goatnickels
 RUN mkdir /goatchain
