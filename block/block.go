@@ -214,7 +214,8 @@ func InitializeState() {
 	Voting = false
 
 	maxBlock, nodes := GetMaxBlockNumberFromNetwork()
-
+	fmt.Println("Got max block", maxBlock)
+	fmt.Println("At nodes", nodes)
 	//genesis block only created by calling function manually
 	//always check the network for max block, then start
 
