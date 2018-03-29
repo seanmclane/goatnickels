@@ -911,19 +911,27 @@ func (t *Transaction) VerifyTransaction() (ok bool) {
 	//verify signature
 	sigOk := ecdsa.Verify(pub, hash, r, s)
 	//verify balance is sufficient
+	balOk := t.VerifyPositiveBalance()
+	//verify transaction not < 0
 	spendOk := t.VerifyNegativeSpend()
 	//do not check sequence here, so you can have more than one transaction per block
-	fmt.Println(sigOk, spendOk)
-	if sigOk && spendOk {
+	if sigOk && balOk && spendOk {
 		return true
 	} else {
 		return false
 	}
+}
 
+func (t *Transaction) VerifyPositiveBalance() (ok bool) {
+	if LastGoatBlock.Data.State[t.From].Balance < t.Amount {
+		return false
+	} else {
+		return true
+	}
 }
 
 func (t *Transaction) VerifyNegativeSpend() (ok bool) {
-	if LastGoatBlock.Data.State[t.From].Balance < t.Amount {
+	if t.Amount < 0 {
 		return false
 	} else {
 		return true
