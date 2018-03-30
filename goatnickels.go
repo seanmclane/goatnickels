@@ -19,21 +19,28 @@ func mine() {
 	block.DescribeBlock(block.LastGoatBlock)
 
 	for {
-		if time.Now().Second() == 20 || time.Now().Second() == 50 {
-			//TODO: Move any transactions not reaching 80 percent to the staging set
-			block.Voting = true
-			fmt.Println("---------- Start voting round ---------")
-			block.SendVoteToNetwork()
+		voteStartList := [6]int{8, 18, 28, 38, 48, 58}
+		voteEndList := [6]int{0, 10, 20, 30, 40, 50}
+
+		for _, sec := range voteStartList {
+			if time.Now().Second() == sec {
+				//TODO: Move any transactions not reaching 80 percent to the staging set
+				block.Voting = true
+				fmt.Println("---------- Start voting round ---------")
+				block.SendVoteToNetwork()
+			}
 		}
-		if time.Now().Second() == 30 || time.Now().Second() == 0 {
-			block.CheckConsensus()
-			block.Voting = false
-			//add staging transactions back into candidate set
-			//for now I will overwrite the candidate set with the staging set
-			//TODO: ensure transactions that were not in the applied candidate set stay in the new candidate set with all the staging transactions
-			block.ResetCandidateSet()
-			block.ResetVoteSet()
-			fmt.Println("---------- End voting round ---------")
+		for _, sec := range voteEndList {
+			if time.Now().Second() == sec {
+				block.CheckConsensus()
+				block.Voting = false
+				//add staging transactions back into candidate set
+				//for now I will overwrite the candidate set with the staging set
+				//TODO: ensure transactions that were not in the applied candidate set stay in the new candidate set with all the staging transactions
+				block.ResetCandidateSet()
+				block.ResetVoteSet()
+				fmt.Println("---------- End voting round ---------")
+			}
 		}
 		time.Sleep(1 * time.Second)
 	}
