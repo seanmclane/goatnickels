@@ -932,10 +932,10 @@ func (t *Transaction) VerifyPositiveBalance() (ok bool) {
 }
 
 func (t *Transaction) VerifyNegativeSpend() (ok bool) {
-	if t.Amount < 0 {
-		return false
-	} else {
+	if t.Amount > 0 {
 		return true
+	} else {
+		return false
 	}
 }
 
