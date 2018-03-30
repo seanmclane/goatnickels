@@ -186,7 +186,7 @@ func CreateGenesisBlock() {
 	}
 
 	//convert [64]byte to []byte
-	fixedHash := sha3.Sum512([]byte("Goatnickels baby!"))
+	fixedHash := sha3.Sum512([]byte("TESTNET"))
 	hash := fixedHash[:]
 
 	//genesis block for now
