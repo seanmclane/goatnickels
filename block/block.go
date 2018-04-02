@@ -158,6 +158,24 @@ func (b *Block) HashBlock() {
 	b.Hash = fixedHash[:]
 }
 
+func WriteDefaultConfig() {
+	user, _ := user.Current()
+	dir := user.HomeDir
+	config := Config{
+		Directory: dir + "/.goatnickels/goatchain/",
+		Nodes:     []string{"s1.goatnickels.com", "s2.goatnickels.com", "s3.goatnickels.com"},
+		Account:   "",
+	}
+
+	file, err := json.Marshal(config)
+	if err != nil {
+		fmt.Println("error:", err)
+	}
+
+	os.MkdirAll(dir+"/.goatnickels/goatchain/", 0777)
+	ioutil.WriteFile(dir+"/.goatnickels/config.json", file, 0777)
+}
+
 func CreateGenesisBlock() {
 	//temporary
 	//manually adding accounts for now
@@ -828,7 +846,7 @@ func (b *Block) WriteBlockToLocalStorage() {
 
 }
 
-func GenerateAccount() (k KeyStore) {
+func GenerateAccount(save string) (k KeyStore) {
 	//create the keypair
 	priv, err := ecdsa.GenerateKey(elliptic.P384(), rand.Reader)
 	if err != nil {
@@ -841,8 +859,32 @@ func GenerateAccount() (k KeyStore) {
 
 	k = KeyStore{
 		PrivateKey: hex.EncodeToString(priv.D.Bytes()),
-		PublicKey:  "goat_" + hex.EncodeToString(pubkey),
+		PublicKey:  hex.EncodeToString(pubkey),
 	}
+
+	if save == "y" {
+		user, _ := user.Current()
+		dir := user.HomeDir
+
+		keystore, err := json.Marshal(k)
+		if err != nil {
+			fmt.Println("error:", err)
+		}
+
+		c := LoadConfig()
+
+		c.Account = "goat_" + k.PublicKey
+
+		config, err := json.Marshal(c)
+		if err != nil {
+			fmt.Println("error:", err)
+		}
+
+		ioutil.WriteFile(dir+"/.goatnickels/keystore.json", keystore, 0777)
+		ioutil.WriteFile(dir+"/.goatnickels/config.json", config, 0777)
+	}
+
+	k.PublicKey = "goat_" + k.PublicKey
 
 	return k
 }

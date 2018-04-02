@@ -50,16 +50,9 @@ func main() {
 	genesisFlag := flag.String("genesis", "n", "create the genesis block?")
 	serveFlag := flag.String("serve", "n", "y or n")
 	acctFlag := flag.String("generate-acct", "n", "do you want generate a keypair for a new account?")
-	signFlag := flag.String("sign", "n", "do you want to sign a transaction?")
-	//hashFlag := flag.String("hash", "no", "do you want to hash a transaction?")
+	saveKeyFlag := flag.String("save", "n", "saves the generated key")
+	configFlag := flag.String("init-config", "no", "do you want to write the default config file?")
 	testFlag := flag.String("test", "n", "do you want to test whatever you're working on now?")
-
-	//transaction flags
-	toFlag := flag.String("to", "", "what account should be credited in this transaction?")
-	fromFlag := flag.String("from", "", "what account should be debited in this transaction?")
-	amountFlag := flag.Int("amount", 0, "how much do you want to send?")
-	//TODO: add sequence or figure out where to source sequence
-	privateKeyFlag := flag.String("private-key", "", "needed to sign and send a transaction")
 
 	flag.Parse()
 
@@ -94,7 +87,7 @@ func main() {
 	}
 
 	if *acctFlag == "y" {
-		k := block.GenerateAccount()
+		k := block.GenerateAccount(*saveKeyFlag)
 
 		bytes, err := json.Marshal(k)
 		if err != nil {
@@ -104,19 +97,8 @@ func main() {
 		fmt.Println(string(bytes))
 	}
 
-	if *signFlag == "y" {
-		//create transaction with flag values
-		t := block.Transaction{
-			To:   *toFlag,
-			From: *fromFlag,
-			//From: "goat_04c12951412edfc215fe6d288491eb1251e2d8d99375c01049588dd228c6346f068246353d84702418f797d672af512d89742f6842b32f43541ea703f08170a67687f75fe0c6f15bd518764dee5476c86f9ba33f28036a76d018c1d7c8b14c307f",
-			Amount:   *amountFlag,
-			Sequence: 1,
-		}
-		//privateKey := "8b63849798d4633fe16553d428fdd50a1214296f0e02e5ebd0a7c78040a84775153a4dcacfc9dc7f4aeab9cc981fbb78"
-		r, s := t.SignTransaction(*privateKeyFlag)
-		fmt.Println("r:", r)
-		fmt.Println("s:", s)
+	if *configFlag == "y" {
+		block.WriteDefaultConfig()
 	}
 
 	if *testFlag == "y" {
