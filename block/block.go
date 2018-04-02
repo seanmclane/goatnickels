@@ -428,14 +428,10 @@ func (v *Vote) VerifyVote() (ok bool) {
 
 	//check that the vote is not in the voteset already
 	for _, vote := range VoteSet {
-		if *v == vote {
+		if v.Account == vote.Account && v.Hash == vote.Hash {
 			return false
 		}
-		//check that there is not another vote from the same account in this round
-		if v.Account == vote.Account && v.Hash != vote.Hash {
-			//TODO: penalize double voting for different hashes, slash deposit
-			return false
-		}
+		//allow votes with the same account but different hashes to be added
 	}
 
 	//verify signature of account sending the vote
