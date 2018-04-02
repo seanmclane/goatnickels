@@ -4,7 +4,7 @@ GoatNickels is a blockchain-based cryptocurrency implemented in Go. This is the 
 
 ## Quick Start Guide
 
-See the GoatNickels Quick Start Guide [here](goatnickels.com/goatnickels-quick-start-guide).
+See the GoatNickels Quick Start Guide [here](goatnickels.com/goat-nickels-quick-start-guide).
 
 ## Block Data
 
