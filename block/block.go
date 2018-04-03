@@ -833,7 +833,7 @@ func (b *Block) WriteBlockToLocalStorage() {
 
 	//write json to file at config directory
 	//TODO: check if file exists and don't overwrite
-	err = ioutil.WriteFile(string(config.Directory)+strconv.Itoa(b.Index), out, 0644)
+	err = ioutil.WriteFile(string(config.Directory)+strconv.Itoa(b.Index), out, 0777)
 	if err != nil {
 		panic(err)
 	} else {
