@@ -573,8 +573,9 @@ func CheckConsensus() {
 		//catch up to network
 		time.Sleep(3 * time.Second)
 		maxBlock, nodes := GetMaxBlockNumberFromNetwork()
-		if FindMaxBlock() < maxBlock {
-			GetBlockFromNetwork(maxBlock, nodes[0])
+		localMax := FindMaxBlock()
+		if localMax < maxBlock {
+			GetBlockChainFromNetwork(localMax, maxBlock, nodes[0])
 			LastGoatBlock = ReadBlockFromLocalStorage(strconv.Itoa(maxBlock))
 			//TODO: loop through to get real max block
 		} else {
@@ -598,8 +599,9 @@ func CheckConsensus() {
 			NextBlock()
 		} else {
 			time.Sleep(3 * time.Second)
+			localMax := FindMaxBlock()
 			maxBlock, nodes := GetMaxBlockNumberFromNetwork()
-			GetBlockFromNetwork(maxBlock, nodes[0])
+			GetBlockChainFromNetwork(localMax, maxBlock, nodes[0])
 			LastGoatBlock = ReadBlockFromLocalStorage(strconv.Itoa(maxBlock))
 		}
 		//TODO: loop through to get real max block
