@@ -8,6 +8,7 @@ import (
 	"encoding/hex"
 	"encoding/json"
 	"fmt"
+	"github.com/seanmclane/goatnickels/rpc"
 	"golang.org/x/crypto/sha3"
 	"io/ioutil"
 	"net/http"
@@ -439,6 +440,10 @@ func (b *Block) WriteBlockToLocalStorage() {
 		fmt.Println("error:", err)
 		return
 	}
+
+	//broadcast the block as a json rpc message with the method "block"
+	//TODO: relocate this so blocks are not broadcast as nodes catch up?
+	rpc.BroadcastChannel <- rpc.BuildNotification("block", out)
 
 	//write json to file at config directory
 	//TODO: check if file exists and don't overwrite

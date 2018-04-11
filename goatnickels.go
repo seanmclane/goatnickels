@@ -51,7 +51,7 @@ func main() {
 	serveFlag := flag.String("serve", "n", "y or n")
 	acctFlag := flag.String("generate-acct", "n", "do you want generate a keypair for a new account?")
 	saveKeyFlag := flag.String("save", "n", "saves the generated key")
-	configFlag := flag.String("init-config", "no", "do you want to write the default config file?")
+	configFlag := flag.String("init-config", "n", "do you want to write the default config file?")
 	testFlag := flag.String("test", "n", "do you want to test whatever you're working on now?")
 
 	flag.Parse()
@@ -74,6 +74,8 @@ func main() {
 		s.HandleFunc("/sign", handler.SignTxion).Methods("POST")
 		s.HandleFunc("/vote", handler.Vote).Methods("POST")
 
+		s.HandleFunc("/ws", handler.HandleConnections)
+
 		srv := &http.Server{
 			Addr:         ":3000",
 			Handler:      r,
@@ -82,6 +84,7 @@ func main() {
 		}
 
 		go mine()
+		go handler.BroadcastMessages()
 		log.Fatal(srv.ListenAndServe())
 
 	}

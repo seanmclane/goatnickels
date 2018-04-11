@@ -9,6 +9,7 @@ import (
 	"encoding/hex"
 	"encoding/json"
 	"fmt"
+	"github.com/seanmclane/goatnickels/rpc"
 	"golang.org/x/crypto/sha3"
 	"math/big"
 	"net/http"
@@ -221,6 +222,16 @@ func (t *Transaction) VerifySequence() (ok bool) {
 }
 
 func (t *Transaction) Broadcast() {
+
+	//convert data to plain json
+	out, err := json.Marshal(t)
+	if err != nil {
+		fmt.Println("error:", err)
+		return
+	}
+
+	//broadcast transaction through websocket
+	rpc.BroadcastChannel <- rpc.BuildNotification("transaction", out)
 
 	config := LoadConfig()
 
