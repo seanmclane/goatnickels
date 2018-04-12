@@ -3,17 +3,35 @@ services:
   goat1:
     build:
       context: .
-      dockerfile: Dockerfile
+      dockerfile: DockerfileLocal
+      args:
+        - CONFIG=./docker/config1.json
+        - KEYSTORE=./docker/keystore1.json
+        - USER=root
     restart: always
+    volumes:
+      - $GOPATH/src:/go/src:ro
     ports:
       - 3000:3000
   goat2:
     build:
       context: .
-      dockerfile: Dockerfile
+      dockerfile: DockerfileLocal
+      args:
+        - CONFIG=./docker/config2.json
+        - KEYSTORE=./docker/keystore2.json
+        - USER=root
     restart: always
+    volumes:
+      - $GOPATH/src:/go/src:ro
   goat3:
     build:
       context: .
-      dockerfile: Dockerfile
+      dockerfile: DockerfileLocal
+      args:
+        - CONFIG=./docker/config3.json
+        - KEYSTORE=./docker/keystore3.json
+        - USER=root
     restart: always
+    volumes:
+      - $GOPATH/src:/go/src:ro

@@ -8,7 +8,7 @@ var BroadcastChannel = make(chan JsonRpcMessage)
 
 type JsonRpcMessage struct {
 	Version string          `json:"jsonrpc"`
-	ID      json.RawMessage `json:"id,omitempty"`
+	Id      int             `json:"id,omitempty"`
 	Method  string          `json:"method,omitempty"`
 	Params  json.RawMessage `json:"params,omitempty"`
 	Error   *jsonRpcError   `json:"error,omitempty"`
@@ -24,20 +24,20 @@ func BuildNotification(Method string, Params json.RawMessage) (msg JsonRpcMessag
 	return msg
 }
 
-func BuildRequest(Id json.RawMessage, Method string, Params json.RawMessage) (msg JsonRpcMessage) {
+func BuildRequest(Id int, Method string, Params json.RawMessage) (msg JsonRpcMessage) {
 	msg = JsonRpcMessage{
 		Version: "2.0",
-		ID:      Id,
+		Id:      Id,
 		Method:  Method,
 		Params:  Params,
 	}
 	return msg
 }
 
-func BuildResponse(Id json.RawMessage, Result json.RawMessage, Error *jsonRpcError) (msg JsonRpcMessage) {
+func BuildResponse(Id int, Result json.RawMessage, Error *jsonRpcError) (msg JsonRpcMessage) {
 	msg = JsonRpcMessage{
 		Version: "2.0",
-		ID:      Id,
+		Id:      Id,
 		Result:  Result,
 		Error:   Error,
 	}

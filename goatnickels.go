@@ -7,6 +7,7 @@ import (
 	"github.com/gorilla/mux"
 	"github.com/seanmclane/goatnickels/block"
 	"github.com/seanmclane/goatnickels/handler"
+	"github.com/seanmclane/goatnickels/pubsub"
 	"log"
 	"net/http"
 	"time"
@@ -74,7 +75,10 @@ func main() {
 		s.HandleFunc("/sign", handler.SignTxion).Methods("POST")
 		s.HandleFunc("/vote", handler.Vote).Methods("POST")
 
-		s.HandleFunc("/ws", handler.HandleConnections)
+		hub := pubsub.DefaultHub
+		go hub.Run()
+
+		s.HandleFunc("/ws", func(w http.ResponseWriter, r *http.Request) { handler.HandleConnections(hub, w, r) })
 
 		srv := &http.Server{
 			Addr:         ":3000",
@@ -84,9 +88,8 @@ func main() {
 		}
 
 		go mine()
-		go handler.BroadcastMessages()
-		go handler.ConnectToNodes()
-		go log.Fatal(srv.ListenAndServe())
+		go handler.ConnectToNodes(hub)
+		log.Fatal(srv.ListenAndServe())
 	}
 
 	if *acctFlag == "y" {

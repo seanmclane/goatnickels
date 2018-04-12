@@ -8,12 +8,12 @@ import (
 	"encoding/hex"
 	"encoding/json"
 	"fmt"
+	"github.com/seanmclane/goatnickels/pubsub"
 	"github.com/seanmclane/goatnickels/rpc"
 	"golang.org/x/crypto/sha3"
 	"io/ioutil"
 	"net/http"
 	"os"
-	"os/user"
 	"strconv"
 	"time"
 )
@@ -28,8 +28,7 @@ type Config struct {
 
 //load config
 func LoadConfig() (config Config) {
-	user, _ := user.Current()
-	dir := user.HomeDir
+	dir := os.Getenv("HOME")
 	c, err := os.Open(dir + "/.goatnickels/config.json")
 	if err != nil {
 		panic(err)
@@ -51,8 +50,7 @@ type KeyStore struct {
 }
 
 func LoadKeyStore() (keystore KeyStore) {
-	user, _ := user.Current()
-	dir := user.HomeDir
+	dir := os.Getenv("HOME")
 	k, err := os.Open(dir + "/.goatnickels/keystore.json")
 	if err != nil {
 		panic(err)
@@ -79,6 +77,9 @@ var Accounts map[string]Account
 var client = &http.Client{
 	Timeout: time.Second * 10,
 }
+
+//bring in default hub for broadcasting messages
+var hub = pubsub.DefaultHub
 
 //removing blockchain since it's not needed to store whole chain in memory
 // type Blockchain []Block
@@ -130,8 +131,7 @@ func (b *Block) HashBlock() {
 }
 
 func WriteDefaultConfig() {
-	user, _ := user.Current()
-	dir := user.HomeDir
+	dir := os.Getenv("HOME")
 	config := Config{
 		Directory: dir + "/.goatnickels/goatchain/",
 		Nodes:     []string{"s1.goatnickels.com", "s2.goatnickels.com", "s3.goatnickels.com"},
@@ -276,6 +276,9 @@ func GetMaxBlockNumberFromNetwork() (maxBlockId int, nodes []string) {
 }
 
 func GetBlockFromNetwork(blockNumber int, node string) {
+
+	hub.Broadcast <- rpc.BuildRequest(1, "getblock", []byte(`{"index": 1}`))
+
 	r, err := client.Get("http://" + node + ":3000/api/v1/block/" + strconv.Itoa(int(blockNumber)))
 	if err != nil {
 		fmt.Println("could not get block from", node)
@@ -400,6 +403,16 @@ func NextBlock() {
 
 	LastGoatBlock = nextBlock
 
+	//convert data to plain json
+	out, err := json.Marshal(nextBlock)
+	if err != nil {
+		fmt.Println("error:", err)
+		return
+	}
+
+	//broadcast the block as a json rpc message with the method "block"
+	hub.Broadcast <- rpc.BuildNotification("block", out)
+
 	nextBlock.WriteBlockToLocalStorage()
 
 }
@@ -441,10 +454,6 @@ func (b *Block) WriteBlockToLocalStorage() {
 		return
 	}
 
-	//broadcast the block as a json rpc message with the method "block"
-	//TODO: relocate this so blocks are not broadcast as nodes catch up?
-	rpc.BroadcastChannel <- rpc.BuildNotification("block", out)
-
 	//write json to file at config directory
 	//TODO: check if file exists and don't overwrite
 	err = ioutil.WriteFile(string(config.Directory)+strconv.Itoa(b.Index), out, 0777)
@@ -473,8 +482,7 @@ func GenerateAccount(save string) (k KeyStore) {
 	}
 
 	if save == "y" {
-		user, _ := user.Current()
-		dir := user.HomeDir
+		dir := os.Getenv("HOME")
 
 		keystore, err := json.Marshal(k)
 		if err != nil {

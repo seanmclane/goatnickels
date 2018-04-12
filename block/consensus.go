@@ -235,5 +235,5 @@ func SendVoteToNetwork() {
 	}
 
 	//broadcast vote to network through websocket
-	rpc.BroadcastChannel <- rpc.BuildNotification("vote", out)
+	hub.Broadcast <- rpc.BuildNotification("vote", out)
 }

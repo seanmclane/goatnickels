@@ -1,8 +1,8 @@
 FROM golang
 RUN go get github.com/seanmclane/goatnickels
-ENV CONFIG=""
-ENV KEYSTORE=""
-ENV USER=""
+ARG CONFIG=""
+ARG KEYSTORE=""
+ARG USER=""
 EXPOSE 3000
 RUN goatnickels -init-config y
 RUN goatnickels -generate-acct y -save y
