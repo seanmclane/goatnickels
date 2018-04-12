@@ -9,8 +9,8 @@ import (
 	"encoding/hex"
 	"encoding/json"
 	"fmt"
+	"github.com/seanmclane/goatnickels/rpc"
 	"math/big"
-	"net/http"
 	"strconv"
 	"time"
 )
@@ -211,6 +211,7 @@ func (v *Vote) HashVote() (h []byte) {
 }
 
 func SendVoteToNetwork() {
+
 	config := LoadConfig()
 
 	v := Vote{
@@ -225,23 +226,14 @@ func SendVoteToNetwork() {
 		S: s,
 	}
 
-	//TODO: remove self node from list of nodes
+	//ensure the vote exists locally in the voteset, then broadcast
+	v.AddVote()
 
-	for _, node := range config.Nodes {
-		json, err := json.Marshal(v)
-		if err != nil {
-			fmt.Println("error:", err)
-		}
-		req, err := http.NewRequest("POST", "http://"+node+":3000/api/v1/vote", bytes.NewBuffer(json))
-		if err != nil {
-			fmt.Println("error:", err)
-		}
-		req.Header.Set("Content-Type", "application/json")
-		r, err := client.Do(req)
-		if err != nil {
-			fmt.Println("error:", err)
-		} else {
-			fmt.Println("Status:", r.Status)
-		}
+	out, err := json.Marshal(v)
+	if err != nil {
+		fmt.Println("error:", err)
 	}
+
+	//broadcast vote to network through websocket
+	rpc.BroadcastChannel <- rpc.BuildNotification("vote", out)
 }

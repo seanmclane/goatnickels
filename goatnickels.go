@@ -85,8 +85,8 @@ func main() {
 
 		go mine()
 		go handler.BroadcastMessages()
-		log.Fatal(srv.ListenAndServe())
-
+		go handler.ConnectToNodes()
+		go log.Fatal(srv.ListenAndServe())
 	}
 
 	if *acctFlag == "y" {

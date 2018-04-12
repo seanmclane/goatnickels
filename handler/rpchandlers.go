@@ -4,9 +4,12 @@ import (
 	"encoding/json"
 	"fmt"
 	"github.com/gorilla/websocket"
+	"github.com/seanmclane/goatnickels/block"
 	"github.com/seanmclane/goatnickels/rpc"
 	"log"
 	"net/http"
+	"net/url"
+	"time"
 )
 
 var clients = make(map[*websocket.Conn]clientConfig) // connected clients
@@ -25,7 +28,7 @@ func HandleConnections(w http.ResponseWriter, r *http.Request) {
 
 	clients[conn] = clientConfig{
 		Connected: true,
-		Subs:      []string{"test"},
+		Subs:      []string{"block", "transaction", "vote"},
 	}
 	fmt.Println(clients[conn].Connected)
 	defer conn.Close()
@@ -42,6 +45,32 @@ func HandleConnections(w http.ResponseWriter, r *http.Request) {
 		switch msg.Method {
 		case "subscribe":
 			handleSubs(conn, msg)
+		case "transaction":
+			fmt.Println("transaction message received")
+			var txion block.Transaction
+			err := json.Unmarshal(msg.Params, &txion)
+			if err != nil {
+				log.Printf("error: %v", err)
+				delete(clients, conn)
+				break
+			}
+			if txion.AddTransaction() {
+				//TODO: change this to a response message type, so the client knows whether it was successful
+				rpc.BroadcastChannel <- msg
+			}
+		case "vote":
+			fmt.Println("vote message received")
+			var vote block.Vote
+			err := json.Unmarshal(msg.Params, &vote)
+			if err != nil {
+				log.Printf("error: %v", err)
+				delete(clients, conn)
+				break
+			}
+			if vote.AddVote() {
+				//TODO: change this to a response message type, so the client knows whether it was successful
+				rpc.BroadcastChannel <- msg
+			}
 		default:
 			rpc.BroadcastChannel <- msg
 		}
@@ -90,5 +119,32 @@ func handleSubs(conn *websocket.Conn, msg rpc.JsonRpcMessage) {
 	clients[conn] = clientConfig{
 		Connected: true,
 		Subs:      subs,
+	}
+}
+
+func ConnectToNodes() {
+	time.Sleep(1 * time.Second)
+	config := block.LoadConfig()
+
+	for _, node := range config.Nodes {
+		go connectToNode(node)
+	}
+}
+
+func connectToNode(node string) {
+	u := url.URL{Scheme: "ws", Host: node + ":3000", Path: "api/v1/ws"}
+	fmt.Println("connecting to node:", u.String())
+	conn, _, err := websocket.DefaultDialer.Dial(u.String(), nil)
+	if err != nil {
+		log.Fatal("error:", err)
+	}
+	defer conn.Close()
+	for {
+		_, message, err := conn.ReadMessage()
+		if err != nil {
+			log.Println("read:", err)
+			return
+		}
+		log.Printf("recv: %s", message)
 	}
 }

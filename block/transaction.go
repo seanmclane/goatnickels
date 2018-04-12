@@ -1,18 +1,14 @@
 package block
 
 import (
-	"bytes"
 	"crypto/ecdsa"
 	"crypto/elliptic"
 	"crypto/rand"
 	"crypto/sha512"
 	"encoding/hex"
-	"encoding/json"
 	"fmt"
-	"github.com/seanmclane/goatnickels/rpc"
 	"golang.org/x/crypto/sha3"
 	"math/big"
-	"net/http"
 	"sort"
 	"strconv"
 )
@@ -74,8 +70,6 @@ func (t *Transaction) AddTransaction() (ok bool) {
 	} else {
 		CandidateSet = append(CandidateSet, *t)
 	}
-
-	t.Broadcast()
 	return ok
 }
 
@@ -218,41 +212,6 @@ func (t *Transaction) VerifySequence() (ok bool) {
 		return true
 	} else {
 		return false
-	}
-}
-
-func (t *Transaction) Broadcast() {
-
-	//convert data to plain json
-	out, err := json.Marshal(t)
-	if err != nil {
-		fmt.Println("error:", err)
-		return
-	}
-
-	//broadcast transaction through websocket
-	rpc.BroadcastChannel <- rpc.BuildNotification("transaction", out)
-
-	config := LoadConfig()
-
-	//TODO: remove self node from list of nodes
-
-	for _, node := range config.Nodes {
-		json, err := json.Marshal(t)
-		if err != nil {
-			fmt.Println("error:", err)
-		}
-		req, err := http.NewRequest("POST", "http://"+node+":3000/api/v1/txion", bytes.NewBuffer(json))
-		if err != nil {
-			fmt.Println("error:", err)
-		}
-		req.Header.Set("Content-Type", "application/json")
-		r, err := client.Do(req)
-		if err != nil {
-			fmt.Println("error:", err)
-		} else {
-			fmt.Println("Status:", r.Status)
-		}
 	}
 }
 
