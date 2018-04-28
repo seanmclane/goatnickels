@@ -6,7 +6,9 @@ import (
 	"crypto/rand"
 	"crypto/sha512"
 	"encoding/hex"
+	"encoding/json"
 	"fmt"
+	"github.com/seanmclane/goatnickels/rpc"
 	"golang.org/x/crypto/sha3"
 	"math/big"
 	"sort"
@@ -21,6 +23,9 @@ type Transaction struct {
 	R        string `json:"r"`
 	S        string `json:"s"`
 }
+
+//create channel to avoid write conflicts to voteset
+var TransactionChannel chan rpc.JsonRpcMessage
 
 //create candidate set of transactions
 var CandidateSet []Transaction
@@ -71,6 +76,22 @@ func (t *Transaction) AddTransaction() (ok bool) {
 		CandidateSet = append(CandidateSet, *t)
 	}
 	return ok
+}
+
+func handleTransactionChannel() {
+	TransactionChannel = make(chan rpc.JsonRpcMessage)
+	for {
+		msg := <-TransactionChannel
+		var txion Transaction
+		err := json.Unmarshal(msg.Params, &txion)
+		if err != nil {
+			fmt.Printf("error: %v", err)
+			return
+		}
+		if txion.AddTransaction() {
+			hub.Broadcast <- msg
+		}
+	}
 }
 
 func (d *Data) ApplyTransactions() {

@@ -80,16 +80,19 @@ func ReadPumpFunc() func(c *pubsub.Client) {
 				log.Printf("error: %v", err)
 				break
 			}
+			fmt.Println(msg.Method)
 			//handle message types with appropriate functions
 			switch msg.Method {
 			case "subscribe":
 				handleSubs(c, msg)
 			case "transaction":
-				handleTransaction(c, msg)
+				block.TransactionChannel <- msg
 			case "vote":
-				handleVote(c, msg)
+				block.VoteChannel <- msg
 			case "getblock":
 				handleGetBlock(c, msg)
+			case "block":
+				block.BlockChannel <- msg
 			case "":
 				handleResult(c, msg)
 			default:
@@ -118,34 +121,6 @@ func handleSubs(c *pubsub.Client, msg rpc.JsonRpcMessage) {
 	res := rpc.BuildResponse(msg.Id, out, nil)
 	//send directly to client rather than putting on the broadcast channel
 	c.Send <- res
-}
-
-func handleTransaction(c *pubsub.Client, msg rpc.JsonRpcMessage) {
-	fmt.Println("transaction message received")
-	var txion block.Transaction
-	err := json.Unmarshal(msg.Params, &txion)
-	if err != nil {
-		log.Printf("error: %v", err)
-		return
-	}
-	if txion.AddTransaction() {
-		//TODO: change this to a response message type, so the client knows whether it was successful
-		c.Hub.Broadcast <- msg
-	}
-}
-
-func handleVote(c *pubsub.Client, msg rpc.JsonRpcMessage) {
-	fmt.Println("vote message received")
-	var vote block.Vote
-	err := json.Unmarshal(msg.Params, &vote)
-	if err != nil {
-		log.Printf("error: %v", err)
-		return
-	}
-	if vote.AddVote() {
-		//TODO: change this to a response message type, so the client knows whether it was successful
-		c.Hub.Broadcast <- msg
-	}
 }
 
 func handleGetBlock(c *pubsub.Client, msg rpc.JsonRpcMessage) {

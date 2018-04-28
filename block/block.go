@@ -18,6 +18,17 @@ import (
 	"time"
 )
 
+var state networkState
+
+func Run() {
+	state.blocks = make(map[string]Block)
+	go runVoting()
+
+	go handleVoteChannel()
+	go handleTransactionChannel()
+	go handleBlockChannel()
+}
+
 //define config structure
 //does this belong here?
 type Config struct {
@@ -80,6 +91,9 @@ var client = &http.Client{
 
 //bring in default hub for broadcasting messages
 var hub = pubsub.DefaultHub
+
+//block channel for handling other nodes recent blocks
+var BlockChannel chan rpc.JsonRpcMessage
 
 //removing blockchain since it's not needed to store whole chain in memory
 // type Blockchain []Block
@@ -199,16 +213,14 @@ type MaxBlockResponse struct {
 
 func InitializeState() {
 
-	//initialize voting to whether a voting round on the candidate set is happening
-	Voting = false
-
 	maxBlock, nodes := GetMaxBlockNumberFromNetwork()
-	fmt.Println("Got max block", maxBlock)
+	fmt.Println("Got network max block", maxBlock)
 	fmt.Println("At nodes", nodes)
 	//genesis block only created by calling function manually
 	//always check the network for max block, then start
 
 	localMax := FindMaxBlock()
+	fmt.Println("Local max block", localMax)
 
 	//check if different and get blocks from network if behind
 	//TODO: loop through nodes? or retry on failure
@@ -219,6 +231,72 @@ func InitializeState() {
 	}
 
 	LastGoatBlock = ReadBlockFromLocalStorage(strconv.Itoa(localMax))
+
+}
+
+type BlockMessage struct {
+	Account   string    `json:"account"`
+	Signature Signature `json:"signature"`
+	Block     Block     `json:"block"`
+}
+
+type networkState struct {
+	maxBlock int
+	blocks   map[string]Block
+}
+
+func handleBlockChannel() {
+	BlockChannel = make(chan rpc.JsonRpcMessage)
+	for {
+		msg := <-BlockChannel
+		trackMaxBlock(msg)
+	}
+}
+
+func trackMaxBlock(msg rpc.JsonRpcMessage) {
+	//keeps the status of block consensus amongst nodes
+	//lets the node update itself if it gets out of sync
+
+	var bm BlockMessage
+	err := json.Unmarshal(msg.Params, &bm)
+	if err != nil {
+		fmt.Printf("error: %v", err)
+		return
+	}
+	if bm.Block.VerifyBlock() {
+		state.blocks[bm.Account] = bm.Block
+	} else {
+		return
+	}
+
+	//list of maximum block ids with the count as value
+	maxCount := make(map[int]int)
+
+	for _, block := range state.blocks {
+		maxCount[block.Index] += 1
+	}
+
+	fmt.Println("Maxcount:", maxCount)
+
+	//get the max block id with the highest count
+	maxBlockCount := 0
+	maxBlockId := 0
+	for blockId, count := range maxCount {
+		if count > maxBlockCount {
+			maxBlockCount = count
+			maxBlockId = blockId
+		}
+	}
+
+	//define maxblock as 2/3 of accounts have sent a block message with that index
+	//TODO: account for own block not broadcast for scaling to stake, using minus one for now
+
+	if maxBlockCount > len(LastGoatBlock.Data.State)*2/3-1 {
+		state.maxBlock = maxBlockId
+		state.blocks = make(map[string]Block)
+	}
+
+	fmt.Println("Maxblock:", state.maxBlock)
 
 }
 
@@ -277,8 +355,6 @@ func GetMaxBlockNumberFromNetwork() (maxBlockId int, nodes []string) {
 
 func GetBlockFromNetwork(blockNumber int, node string) {
 
-	hub.Broadcast <- rpc.BuildRequest(1, "getblock", []byte(`{"index": 1}`))
-
 	r, err := client.Get("http://" + node + ":3000/api/v1/block/" + strconv.Itoa(int(blockNumber)))
 	if err != nil {
 		fmt.Println("could not get block from", node)
@@ -294,6 +370,7 @@ func GetBlockFromNetwork(blockNumber int, node string) {
 			b.WriteBlockToLocalStorage()
 		} else {
 			fmt.Println("error: invalid block not written")
+			panic("bad local chain")
 			//TODO: return something for the parent to try to get the block again
 		}
 	}
@@ -390,6 +467,8 @@ func MakeNextBlockData() (data Data) {
 
 func NextBlock() {
 
+	config := LoadConfig()
+
 	nextBlock := Block{
 		Index:     LastGoatBlock.Index + 1,
 		Timestamp: int(time.Now().UTC().Unix()),
@@ -403,8 +482,19 @@ func NextBlock() {
 
 	LastGoatBlock = nextBlock
 
-	//convert data to plain json
-	out, err := json.Marshal(nextBlock)
+	//TODO: sign message correctly
+
+	//convert data to block message
+	bm := BlockMessage{
+		Account: config.Account,
+		Signature: Signature{
+			R: "test",
+			S: "test",
+		},
+		Block: nextBlock,
+	}
+
+	out, err := json.Marshal(bm)
 	if err != nil {
 		fmt.Println("error:", err)
 		return
