@@ -35,6 +35,14 @@ func runVoting() {
 	//initialize voting to whether a voting round on the candidate set is happening
 	Voting = false
 
+	//TODO: wait for state to sync but not in a way that hangs...
+	//after ten failures request maxblock through api?
+
+	/* for state.maxBlock < 1 {
+		fmt.Println("waiting for maxblock to sync")
+		time.Sleep(time.Second * 1)
+	} */
+
 	for {
 		voteStartList := [6]int{8, 18, 28, 38, 48, 58}
 		voteEndList := [6]int{0, 10, 20, 30, 40, 50}
@@ -103,6 +111,8 @@ func CheckConsensus() {
 			winningHash = key
 		}
 	}
+
+	//TODO: replace maxBlock with state.maxBlock but wait until the state is accurate
 
 	if total < 1 {
 		//catch up to network

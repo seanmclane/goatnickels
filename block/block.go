@@ -18,6 +18,11 @@ import (
 	"time"
 )
 
+type networkState struct {
+	maxBlock int
+	blocks   map[string]Block
+}
+
 var state networkState
 
 func Run() {
@@ -240,11 +245,6 @@ type BlockMessage struct {
 	Block     Block     `json:"block"`
 }
 
-type networkState struct {
-	maxBlock int
-	blocks   map[string]Block
-}
-
 func handleBlockChannel() {
 	BlockChannel = make(chan rpc.JsonRpcMessage)
 	for {
@@ -294,6 +294,9 @@ func trackMaxBlock(msg rpc.JsonRpcMessage) {
 	if maxBlockCount > len(LastGoatBlock.Data.State)*2/3-1 {
 		state.maxBlock = maxBlockId
 		state.blocks = make(map[string]Block)
+		if state.maxBlock != LastGoatBlock.Index {
+			fmt.Println("OUT OF SYNC", state.maxBlock, LastGoatBlock.Index)
+		}
 	}
 
 	fmt.Println("Maxblock:", state.maxBlock)

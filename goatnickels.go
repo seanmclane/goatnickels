@@ -14,13 +14,6 @@ import (
 	//"encoding/hex"
 )
 
-func mine() {
-	block.InitializeState()
-	block.AsciiGoat()
-	block.DescribeBlock(block.LastGoatBlock)
-	block.Run()
-}
-
 func main() {
 	genesisFlag := flag.String("genesis", "n", "create the genesis block?")
 	serveFlag := flag.String("serve", "n", "y or n")
@@ -61,9 +54,17 @@ func main() {
 			WriteTimeout: 10 * time.Second,
 		}
 
-		go mine()
 		go handler.ConnectToNodes(hub)
-		log.Fatal(srv.ListenAndServe())
+		go func() {
+			err := srv.ListenAndServe()
+			if err != nil {
+				log.Panic(err)
+			}
+		}()
+		block.Run()
+		block.InitializeState()
+		block.AsciiGoat()
+		block.DescribeBlock(block.LastGoatBlock)
 	}
 
 	if *acctFlag == "y" {

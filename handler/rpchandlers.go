@@ -80,7 +80,6 @@ func ReadPumpFunc() func(c *pubsub.Client) {
 				log.Printf("error: %v", err)
 				break
 			}
-			fmt.Println(msg.Method)
 			//handle message types with appropriate functions
 			switch msg.Method {
 			case "subscribe":
